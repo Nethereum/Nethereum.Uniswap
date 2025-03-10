@@ -1,7 +1,196 @@
-# Nethereum.Uniswap V2 and V3
-Template environment and samples (unit tests) to work with Uniswap V2 smart contracts in a forked environment using Hardhat.
+# Nethereum.Uniswap V2, V3, V4, Universal Router and Permit 2
 
-TODO: V3 Sample
+Uniswap V2, V3, V4, Universal Router and Permit 2 starter project / example integration with Nethereum.
+
+This is a reference example, test accordingly.
+
+## V4 Universal Router 
+
+# Uniswap V4 Integration with Nethereum
+
+## Setup
+```csharp
+var url = "https://base-sepolia.drpc.org";
+var privateKey = "0xYOUR_PRIVATE_KEY";
+var web3 = new Web3.Web3(new Account(privateKey), url);
+
+var poolManager = new PoolManagerService(web3, UniswapAddresses.BaseSepoliaPoolManagerV4);
+var usdc = "0x91D1e0b9f6975655A381c79fd6f1D118D1c5b958";
+
+var pool = new PoolKey()
+{
+    Currency0 = AddressUtil.ZERO_ADDRESS,
+    Currency1 = usdc,
+    Fee = 500,
+    TickSpacing = 10,
+    Hooks = "0x24F7c9ea6B5be5227caAeB61366b56052386eae4"
+};
+```
+
+## Quoting Prices
+
+```csharp
+var stateViewService = new StateViewService(web3, UniswapAddresses.BaseSepoliaStateViewV4);
+var v4Quoter = new V4QuoterService(web3, UniswapAddresses.BaseSepoliaQuoterV4);
+
+var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey> { pool }, AddressUtil.ZERO_ADDRESS);
+var amountIn = Web3.Web3.Convert.ToWei(0.001);
+
+var quoteExactParams = new QuoteExactParams()
+{
+    Path = pathKeys,
+    ExactAmount = amountIn,
+    ExactCurrency = AddressUtil.ZERO_ADDRESS
+};
+
+var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteExactParams);
+var quoteAmount = Web3.Web3.Convert.FromWei(quote.AmountOut, 6); // USDC has 6 decimals
+```
+
+## Executing Swaps with Universal Router
+
+```csharp
+var universalRouter = new UniversalRouterService(web3, UniswapAddresses.BaseSepoliaUniversalRouterV4);
+var v4ActionBuilder = new UniversalRouterV4ActionsBuilder();
+
+var swapExactInSingle = new SwapExactIn()
+{
+    AmountIn = amountIn,
+    AmountOutMinimum = quote.AmountOut,
+    Path = pathKeys.MapToActionV4()
+};
+
+v4ActionBuilder.AddCommand(swapExactInSingle);
+
+var routerBuilder = new UniversalRouterBuilder();
+routerBuilder.AddCommand(v4ActionBuilder.GetV4SwapCommand());
+
+var executeFunction = routerBuilder.GetExecuteFunction(amountIn);
+var receipt = await universalRouter.ExecuteRequestAndWaitForReceiptAsync(executeFunction);
+```
+
+
+# Uniswap V3 / Permit 2 / V2Quoter
+
+## Setup
+```csharp
+var url = "https://ethereum-sepolia.rpc.subquery.network/public";
+var privateKey = "0xYOUR_PRIVATE_KEY";
+var account = new Account(privateKey);
+var web3 = new Nethereum.Web3.Web3(account, url);
+
+var factoryAddress = UniswapAddresses.SepoliaUniswapV3Factory;
+var permit2 = UniswapAddresses.SepoliaPermit2;
+var quoterAddress = UniswapAddresses.SepoliaQuoterV2;
+var universalRouter = UniswapAddresses.SepoliaUniversalRouterV3;
+
+var uni = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
+var weth = "0xfff9976782d46cc05630d1f6ebab18b2324d6b14";
+```
+
+## Quoting Prices
+### Using Slot0 Price Calculator
+```csharp
+var calculator = new UniswapV3Slot0PriceCalculator(web3, factoryAddress);
+var priceWethUni = await calculator.GetPoolPricesAsync(uni, weth, 500);
+```
+
+### Using Quoter V2
+```csharp
+var quoterService = new QuoterV2Service(web3, quoterAddress);
+var weth9 = await quoterService.Weth9QueryAsync();
+
+var amountIn = Web3.Web3.Convert.ToWei(0.001);
+var abiEncoder = new Nethereum.ABI.ABIEncode();
+var path = abiEncoder.GetABIEncodedPacked(
+    new ABIValue("address", weth9),
+    new ABIValue("uint24", 500),
+    new ABIValue("address", uni));
+
+var quote = await quoterService.QuoteExactInputQueryAsync(path, amountIn);
+```
+
+## Executing Swaps with Universal Router
+
+### Prepare ERC20 Approval
+```csharp
+var weth9Service = web3.Eth.ERC20.GetContractService(weth9);
+await weth9Service.ApproveRequestAndWaitForReceiptAsync(permit2, IntType.MAX_INT256_VALUE);
+```
+
+### Create and Sign Permit2
+```csharp
+var permit = new PermitSingle()
+{
+    Spender = universalRouter,
+    SigDeadline = 2000000000,
+    Details = new PermitDetails()
+    {
+        Amount = amountIn * 100000,
+        Expiration = 0,
+        Nonce = 0,
+        Token = weth9
+    }
+};
+
+var permitService = new Permit2Service(web3, permit2);
+var signedPermit = await permitService.GetSinglePermitWithSignatureAsync(permit, new EthECKey(privateKey));
+```
+
+### Build and Execute Swap
+```csharp
+var universalRouterService = new UniversalRouterService(web3, universalRouter);
+var planner = new UniversalRouterBuilder();
+
+planner.AddCommand(new WrapEthCommand
+{
+    Amount = amountIn,
+    Recipient = account.Address
+});
+
+planner.AddCommand(new Permit2PermitCommand
+{
+    Permit = signedPermit.PermitRequest,
+    Signature = signedPermit.GetSignatureBytes()
+});
+
+planner.AddCommand(new V3SwapExactInCommand
+{
+    AmountIn = amountIn,
+    AmountOutMinimum = quote.AmountOut - 10000, // slippage
+    Path = path,
+    Recipient = account.Address,
+    FundsFromPermit2OrUniversalRouter = true
+});
+
+var receipt = await universalRouterService.ExecuteRequestAndWaitForReceiptAsync(planner.GetExecuteFunction(amountIn));
+```
+
+### Checking Balances
+```csharp
+var balanceWethWei = await weth9Service.BalanceOfQueryAsync(account.Address);
+var balanceInEth = Web3.Web3.Convert.FromWei(balanceWethWei);
+
+var uniService = web3.Eth.ERC20.GetContractService(uni);
+var balanceUniWei = await uniService.BalanceOfQueryAsync(account.Address);
+var balanceInUni = Web3.Web3.Convert.FromWei(balanceUniWei);
+```
+
+### Error Handling
+```csharp
+catch (SmartContractCustomErrorRevertException e)
+{
+    var error = universalRouterService.FindCustomErrorException(e);
+    if (error != null)
+    {
+        Debug.WriteLine(error.Message);
+        universalRouterService.HandleCustomErrorException(e);
+    }
+    throw;
+}
+```
+
+## Uniswap V2 ERC20 single path and multipath
 
 To enable hardhat.
 
@@ -9,7 +198,7 @@ To enable hardhat.
 2. Configure your fork alchemy api key and block number in your Test settings https://github.com/Nethereum/Nethereum.UniswapV2/blob/main/Nethereum.Uniswap.Testing/appsettings.test.json#L6
 3. When you run your tests it will automatically launch hardhat and fork on the configured block number.
 
-# Code example
+### Code example
 
 ```csharp
         [Fact]
