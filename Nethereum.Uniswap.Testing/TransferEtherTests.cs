@@ -96,7 +96,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.Equal(1000, Web3.Web3.Convert.FromWei(balance));
 
             var totalAmountBack =
-                await transferService.CalculateTotalAmountToTransferWholeBalanceInEther(toAddress, 2);
+                await transferService.CalculateTotalAmountToTransferWholeBalanceInEtherAsync(toAddress, new BigInteger(2));
 
             var web32 = new Web3.Web3(newAccount, web3.Client);
             var receiptBack = await web32.Eth.GetEtherTransferService()

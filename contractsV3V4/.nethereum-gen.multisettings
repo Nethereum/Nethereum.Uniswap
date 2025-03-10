@@ -1,0 +1,48 @@
+[
+    {
+        "paths": [
+            "QuoterV2/QuoterV2.abi",
+            "UniswapV3Factory/UniswapV3Factory.abi",
+            "UniswapV3Pool/UniswapV3Pool.abi"
+        ],
+        "generatorConfigs": [
+            {
+                "baseNamespace": "Nethereum.Uniswap.V3",
+                "basePath": "../src/Nethereum.Uniswap/V3",
+                "codeGenLang": 0,
+                "generatorType": "ContractDefinition"
+            }
+        ]
+    },
+    {
+        "paths": [
+            "UniversalRouter/UniversalRouter.abi",
+            "bin/Permit2/src/Permit2.abi"
+        ],
+        "generatorConfigs": [
+            {
+                "baseNamespace": "Nethereum.Uniswap",
+                "basePath": "../src/Nethereum.Uniswap",
+                "codeGenLang": 0,
+                "generatorType": "ContractDefinition"
+            }
+        ]
+    },
+    {
+        "paths": [
+            "PoolManager/PoolManager.abi",
+            "StateView/StateView.abi",
+            "V4Quoter/V4Quoter.abi",
+            "PositionManager/PositionManager.abi",
+            "PositionDescriptor/PositionDescriptor.abi"
+        ],
+        "generatorConfigs": [
+            {
+                "baseNamespace": "Nethereum.Uniswap.V4",
+                "basePath": "../src/Nethereum.Uniswap/V4",
+                "codeGenLang": 0,
+                "generatorType": "ContractDefinition"
+            }
+        ]
+    }
+]

@@ -1,0 +1,10 @@
+@uniswap/v4-core/src/interfaces/IPoolManager.sol=@uniswap/v4-core/src/interfaces/IPoolManager.sol
+@uniswap/v4-core/src/types/BalanceDelta.sol=@uniswap/v4-core/src/types/BalanceDelta.sol
+@uniswap/v4-core/src/types/Currency.sol=@uniswap/v4-core/src/types/Currency.sol
+@uniswap/v4-core/src/types/PoolKey.sol=@uniswap/v4-core/src/types/PoolKey.sol
+@uniswap/v4-core/src/libraries/StateLibrary.sol=@uniswap/v4-core/src/libraries/StateLibrary.sol
+@uniswap/v4-core/src/interfaces/IHooks.sol=@uniswap/v4-core/src/interfaces/IHooks.sol
+@uniswap/v4-core/src/libraries/ParseBytes.sol=@uniswap/v4-core/src/libraries/ParseBytes.sol
+@uniswap/v4-core/src/types/PoolId.sol=@uniswap/v4-core/src/types/PoolId.sol
+@uniswap/v4-core/src/libraries/TickMath.sol=@uniswap/v4-core/src/libraries/TickMath.sol
+@uniswap/v4-core/src/interfaces/callback/IUnlockCallback.sol=@uniswap/v4-core/src/interfaces/callback/IUnlockCallback.sol

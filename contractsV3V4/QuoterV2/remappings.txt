@@ -1,0 +1,9 @@
+@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol=@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol
+@uniswap/v3-core/contracts/libraries/SafeCast.sol=@uniswap/v3-core/contracts/libraries/SafeCast.sol
+@uniswap/v3-core/contracts/libraries/TickMath.sol=@uniswap/v3-core/contracts/libraries/TickMath.sol
+@uniswap/v3-core/contracts/libraries/TickBitmap.sol=@uniswap/v3-core/contracts/libraries/TickBitmap.sol
+@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol=@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol
+@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol=@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol
+@uniswap/v3-periphery/contracts/libraries/Path.sol=@uniswap/v3-periphery/contracts/libraries/Path.sol
+@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol=@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol
+@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol=@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol

@@ -1,0 +1,4 @@
+@uniswap/v4-core/src/libraries/StateLibrary.sol=src/lib/v4-core/src/libraries/StateLibrary.sol
+@uniswap/v4-core/src/types/PoolId.sol=src/lib/v4-core/src/libraries/types/PoolId.sol
+@uniswap/v4-core/src/interfaces/IPoolManager.sol=src/lib/v4-core/src/interfaces/IPoolManager.sol
+@uniswap/v4-core/src/libraries/Position.sol=src/lib/v4-core/src/libraries/Position.sol

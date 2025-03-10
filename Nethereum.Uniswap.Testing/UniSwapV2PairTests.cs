@@ -1,24 +1,13 @@
 ﻿using System;
-using System.Numerics;
-using Nethereum.Signer;
 using Nethereum.Util;
-using Nethereum.Web3.Accounts;
 using Nethereum.XUnitEthereumClients;
 using Xunit;
-using Nethereum.Web3;
 using Nethereum.Contracts;
-using Nethereum.RPC.Eth.DTOs;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Nethereum.BlockchainProcessing.ProgressRepositories;
-using Nethereum.Uniswap.Contracts.UniswapV2Factory;
-using Nethereum.Uniswap.Contracts.UniswapV2Pair;
-using Nethereum.Uniswap.Contracts.UniswapV2Pair.ContractDefinition;
-using Nethereum.Uniswap.Contracts.UniswapV2Router01.ContractDefinition;
-using Nethereum.Uniswap.Contracts.UniswapV2Router02;
-using Nethereum.Uniswap.Contracts.UniswapV2Router02.ContractDefinition;
+using Nethereum.Uniswap.V2.UniswapV2Pair.ContractDefinition;
+using Nethereum.Uniswap.V2.UniswapV2Factory;
+using Nethereum.Uniswap.V2.UniswapV2Router02;
 
 namespace Nethereum.Uniswap.Testing
 {
@@ -63,7 +52,7 @@ namespace Nethereum.Uniswap.Testing
             
             var deadline = DateTimeOffset.Now.AddMinutes(15).ToUnixTimeSeconds();
             
-            var swapEthForExactTokens = new Contracts.UniswapV2Router02.ContractDefinition.SwapExactETHForTokensFunction()
+            var swapEthForExactTokens = new V2.UniswapV2Router02.ContractDefinition.SwapExactETHForTokensFunction()
             {
                 AmountOutMin = amounts[1],
                 Path = path,
@@ -107,7 +96,7 @@ namespace Nethereum.Uniswap.Testing
 
             var deadline = DateTimeOffset.Now.AddMinutes(15).ToUnixTimeSeconds();
 
-            var swapTokensForExactTokens = new Contracts.UniswapV2Router02.ContractDefinition.SwapExactTokensForTokensFunction()
+            var swapTokensForExactTokens = new V2.UniswapV2Router02.ContractDefinition.SwapExactTokensForTokensFunction()
             {
                 AmountOutMin = amounts[1],
                 Path = path,
