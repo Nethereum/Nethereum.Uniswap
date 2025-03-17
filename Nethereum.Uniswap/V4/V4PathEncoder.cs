@@ -21,7 +21,8 @@ namespace Nethereum.Uniswap.V4
                     IntermediateCurrency = currencyOut,
                     Fee = poolKey.Fee,
                     TickSpacing = poolKey.TickSpacing,
-                    Hooks = poolKey.Hooks
+                    Hooks = poolKey.Hooks,
+                    HookData = new byte[] { }
                 });
 
                 currencyIn = currencyOut;
