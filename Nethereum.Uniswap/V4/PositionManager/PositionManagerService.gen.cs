@@ -350,7 +350,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
                 permit1Function.Spender = spender;
                 permit1Function.TokenId = tokenId;
                 permit1Function.Deadline = deadline;
-                permit1Function.Nonce = nonce;
+                permit1Function.PermitNonce = nonce;
                 permit1Function.Signature = signature;
             
              return ContractHandler.SendRequestAsync(permit1Function);
@@ -362,7 +362,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
                 permit1Function.Spender = spender;
                 permit1Function.TokenId = tokenId;
                 permit1Function.Deadline = deadline;
-                permit1Function.Nonce = nonce;
+                permit1Function.PermitNonce = nonce;
                 permit1Function.Signature = signature;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(permit1Function, cancellationToken);
@@ -456,7 +456,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
                 permitForAllFunction.Operator = @operator;
                 permitForAllFunction.Approved = approved;
                 permitForAllFunction.Deadline = deadline;
-                permitForAllFunction.Nonce = nonce;
+                permitForAllFunction.PermitNonce = nonce;
                 permitForAllFunction.Signature = signature;
             
              return ContractHandler.SendRequestAsync(permitForAllFunction);
@@ -469,7 +469,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
                 permitForAllFunction.Operator = @operator;
                 permitForAllFunction.Approved = approved;
                 permitForAllFunction.Deadline = deadline;
-                permitForAllFunction.Nonce = nonce;
+                permitForAllFunction.PermitNonce = nonce;
                 permitForAllFunction.Signature = signature;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(permitForAllFunction, cancellationToken);
@@ -526,7 +526,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
         public virtual Task<string> RevokeNonceRequestAsync(BigInteger nonce)
         {
             var revokeNonceFunction = new RevokeNonceFunction();
-                revokeNonceFunction.Nonce = nonce;
+                revokeNonceFunction.RevokeNonce = nonce;
             
              return ContractHandler.SendRequestAsync(revokeNonceFunction);
         }
@@ -534,7 +534,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
         public virtual Task<TransactionReceipt> RevokeNonceRequestAndWaitForReceiptAsync(BigInteger nonce, CancellationTokenSource cancellationToken = null)
         {
             var revokeNonceFunction = new RevokeNonceFunction();
-                revokeNonceFunction.Nonce = nonce;
+                revokeNonceFunction.RevokeNonce = nonce;
             
              return ContractHandler.SendRequestAndWaitForReceiptAsync(revokeNonceFunction, cancellationToken);
         }

@@ -16,14 +16,14 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
         [Parameter("int24", "tickUpper", 3)]
         public int TickUpper { get; set; }
 
-        [Parameter("uint256", "amount0", 4)]
-        public BigInteger Amount0 { get; set; }
-
-        [Parameter("uint128", "amount1", 5)]
-        public BigInteger Amount1 { get; set; }
-
-        [Parameter("uint128", "liquidity", 6)]
+        [Parameter("uint256", "liquidity", 4)]
         public BigInteger Liquidity { get; set; }
+
+        [Parameter("uint128", "amount0Max", 5)]
+        public BigInteger Amount0Max { get; set; }
+
+        [Parameter("uint128", "amount1Max", 6)]
+        public BigInteger Amount1Max { get; set; }
 
         [Parameter("address", "recipient", 7)]
         public string Recipient { get; set; }

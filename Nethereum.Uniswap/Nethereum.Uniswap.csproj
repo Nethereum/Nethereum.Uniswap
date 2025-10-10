@@ -6,6 +6,7 @@
 
     <ItemGroup>
         <PackageReference Include="Nethereum.Web3" Version="4.29.0" />
+        <PackageReference Include="Nethereum.BlockchainProcessing" Version="4.29.0" />
     </ItemGroup>
-    
+
 </Project>

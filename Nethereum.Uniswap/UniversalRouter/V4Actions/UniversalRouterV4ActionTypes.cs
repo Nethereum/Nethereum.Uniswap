@@ -7,8 +7,6 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
     //https://github.com/Uniswap/v4-periphery/blob/main/src/libraries/Actions.sol
     public enum UniversalRouterV4ActionTypes
     {
-        // pool actions
-        // liquidity actions
         INCREASE_LIQUIDITY = 0x00,
         DECREASE_LIQUIDITY = 0x01,
         MINT_POSITION = 0x02,
@@ -16,20 +14,15 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
         INCREASE_LIQUIDITY_FROM_DELTAS = 0x04,
         MINT_POSITION_FROM_DELTAS = 0x05,
 
-        // swapping
         SWAP_EXACT_IN_SINGLE = 0x06,
         SWAP_EXACT_IN = 0x07,
         SWAP_EXACT_OUT_SINGLE = 0x08,
         SWAP_EXACT_OUT = 0x09,
-        // donate
-        // DONATE = 0x0a,
 
-        // closing deltas on the pool manager
-        // settling
         SETTLE = 0x0b,
         SETTLE_ALL = 0x0c,
         SETTLE_PAIR = 0x0d,
-        // taking
+
         TAKE = 0x0e,
         TAKE_ALL = 0x0f,
         TAKE_PORTION = 0x10,
@@ -42,7 +35,6 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
         WRAP = 0x15,
         UNWRAP = 0x16,
 
-        // minting/burning 6909s to close deltas
         MINT_6909 = 0x17,
         BURN_6909 = 0x18,
     }
@@ -95,12 +87,16 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
                     return Decode<Settle>(data);
                 case (byte)UniversalRouterV4ActionTypes.SETTLE_ALL:
                     return Decode<SettleAll>(data);
+                case (byte)UniversalRouterV4ActionTypes.SETTLE_PAIR:
+                    return Decode<SettlePair>(data);
                 case (byte)UniversalRouterV4ActionTypes.TAKE:
                     return Decode<Take>(data);
                 case (byte)UniversalRouterV4ActionTypes.TAKE_ALL:
                     return Decode<TakeAll>(data);
                 case (byte)UniversalRouterV4ActionTypes.TAKE_PORTION:
                     return Decode<TakePortion>(data);
+                case (byte)UniversalRouterV4ActionTypes.TAKE_PAIR:
+                    return Decode<TakePair>(data);
                 case (byte)UniversalRouterV4ActionTypes.CLOSE_CURRENCY:
                     return Decode<CloseCurrency>(data);
                 case (byte)UniversalRouterV4ActionTypes.SWEEP:

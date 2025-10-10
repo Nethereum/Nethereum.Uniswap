@@ -283,13 +283,16 @@ namespace Nethereum.XUnitEthereumClients
 
         public void Dispose()
         {
-            if (!_process.HasExited)
+            if (_process != null)
             {
-                _process.Kill();
-            }
+                if (!_process.HasExited)
+                {
+                    _process.Kill();
+                }
 
-            Thread.Sleep(2000);
-            DeleteData();
+                Thread.Sleep(2000);
+                DeleteData();
+            }
         }
 
         private void DeleteData()

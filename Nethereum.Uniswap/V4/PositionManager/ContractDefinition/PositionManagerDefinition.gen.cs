@@ -202,7 +202,7 @@ namespace Nethereum.Uniswap.V4.PositionManager.ContractDefinition
         [Parameter("uint256", "deadline", 3)]
         public virtual BigInteger Deadline { get; set; }
         [Parameter("uint256", "nonce", 4)]
-        public virtual BigInteger Nonce { get; set; }
+        public virtual BigInteger PermitNonce { get; set; }
         [Parameter("bytes", "signature", 5)]
         public virtual byte[] Signature { get; set; }
     }
@@ -255,7 +255,7 @@ namespace Nethereum.Uniswap.V4.PositionManager.ContractDefinition
         [Parameter("uint256", "deadline", 4)]
         public virtual BigInteger Deadline { get; set; }
         [Parameter("uint256", "nonce", 5)]
-        public virtual BigInteger Nonce { get; set; }
+        public virtual BigInteger PermitNonce { get; set; }
         [Parameter("bytes", "signature", 6)]
         public virtual byte[] Signature { get; set; }
     }
@@ -292,7 +292,7 @@ namespace Nethereum.Uniswap.V4.PositionManager.ContractDefinition
     public class RevokeNonceFunctionBase : FunctionMessage
     {
         [Parameter("uint256", "nonce", 1)]
-        public virtual BigInteger Nonce { get; set; }
+        public virtual BigInteger RevokeNonce { get; set; }
     }
 
     public partial class SafeTransferFromFunction : SafeTransferFromFunctionBase { }

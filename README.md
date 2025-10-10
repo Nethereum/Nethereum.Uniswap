@@ -4,9 +4,11 @@ Uniswap V2, V3, V4, Universal Router and Permit 2 starter project / example inte
 
 This is a reference example, test accordingly.
 
-## V4 Universal Router 
+---
 
 # Uniswap V4 Integration with Nethereum
+
+Comprehensive examples for interacting with Uniswap V4 on Ethereum mainnet and testnets using Nethereum.
 
 ## Setup
 ```csharp
@@ -50,23 +52,554 @@ var quoteAmount = Web3.Web3.Convert.FromWei(quote.AmountOut, 6); // USDC has 6 d
 ## Executing Swaps with Universal Router
 
 ```csharp
-var universalRouter = new UniversalRouterService(web3, UniswapAddresses.BaseSepoliaUniversalRouterV4);
+var universalRouter = new UniversalRouterService(web3, UniswapAddresses.MainnetUniversalRouter);
 var v4ActionBuilder = new UniversalRouterV4ActionsBuilder();
 
-var swapExactInSingle = new SwapExactIn()
+// Add swap action
+var swapExactIn = new SwapExactIn()
 {
+    CurrencyIn = eth,
     AmountIn = amountIn,
-    AmountOutMinimum = quote.AmountOut,
+    AmountOutMinimum = quote.AmountOut * 95 / 100, // 5% slippage
     Path = pathKeys.MapToActionV4()
 };
+v4ActionBuilder.AddCommand(swapExactIn);
 
-v4ActionBuilder.AddCommand(swapExactInSingle);
+// Settle input currency (ETH)
+var settleAll = new SettleAll()
+{
+    Currency = eth,
+    Amount = amountIn
+};
+v4ActionBuilder.AddCommand(settleAll);
+
+// Take output currency (USDC)
+var takeAll = new TakeAll()
+{
+    Currency = usdc,
+    MinAmount = 0
+};
+v4ActionBuilder.AddCommand(takeAll);
 
 var routerBuilder = new UniversalRouterBuilder();
 routerBuilder.AddCommand(v4ActionBuilder.GetV4SwapCommand());
 
 var executeFunction = routerBuilder.GetExecuteFunction(amountIn);
 var receipt = await universalRouter.ExecuteRequestAndWaitForReceiptAsync(executeFunction);
+```
+
+## Price Calculations and Math Utilities
+
+### Calculate Pool Prices from SqrtPriceX96
+```csharp
+var prices = V4PriceCalculator.CalculatePricesFromSqrtPriceX96(
+    sqrtPriceX96,
+    token0Decimals: 18,
+    token1Decimals: 6);
+
+var priceToken0InToken1 = prices.Item1; // Price of token0 in terms of token1
+var priceToken1InToken0 = prices.Item2; // Price of token1 in terms of token0
+```
+
+### Tick Math - Convert Between Ticks and Prices
+```csharp
+// Get sqrt price from tick
+var sqrtPriceX96 = V4TickMath.GetSqrtRatioAtTick(tick);
+
+// Get tick from sqrt price
+var tick = V4TickMath.GetTickAtSqrtRatio(sqrtPriceX96);
+```
+
+### Liquidity Math - Calculate Token Amounts
+```csharp
+var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(
+    sqrtPriceX96,
+    tickLower,
+    tickUpper,
+    liquidity);
+
+var amount0 = amounts.Item1;
+var amount1 = amounts.Item2;
+```
+
+## Slippage and Price Impact Protection
+
+### Calculate Slippage-Protected Amounts
+```csharp
+var slippageCalculator = new V4SlippageCalculator();
+
+// For exact input swaps (you know input, calculate min output)
+var minAmountOut = slippageCalculator.CalculateMinimumAmountOut(
+    expectedAmountOut,
+    slippageTolerancePercent: 0.5m); // 0.5% slippage
+
+// For exact output swaps (you know output, calculate max input)
+var maxAmountIn = slippageCalculator.CalculateMaximumAmountIn(
+    expectedAmountIn,
+    slippageTolerancePercent: 0.5m);
+```
+
+### Calculate and Monitor Price Impact
+```csharp
+var calculator = new V4PriceImpactCalculator();
+
+// Calculate price impact percentage
+var priceImpact = calculator.CalculatePriceImpact(
+    inputAmount,
+    outputAmount,
+    midPrice);
+
+// Classify impact level
+var impactLevel = calculator.ClassifyPriceImpact(priceImpact);
+// Returns: Low (<1%), Medium (1-3%), High (3-5%), Critical (>5%)
+
+// Get user-friendly warning message
+var warning = calculator.GetPriceImpactWarning(impactLevel);
+```
+
+## Token Price Discovery
+
+### Get Token Price in Stablecoins
+```csharp
+// Get price in specific stablecoin
+var price = await V4PriceService.GetPriceInStablecoinAsync(
+    web3,
+    quoterAddress,
+    tokenAddress,
+    stablecoinAddress,
+    tokenDecimals: 18,
+    stablecoinDecimals: 6,
+    fee: 3000,
+    tickSpacing: 60);
+
+// Get best price across all fee tiers
+var bestPrice = await V4PriceService.GetBestPriceInStablecoinAsync(
+    web3,
+    quoterAddress,
+    tokenAddress,
+    stablecoinAddress,
+    tokenDecimals: 18,
+    stablecoinDecimals: 6,
+    tickSpacing: 60);
+
+// Get prices in all stablecoins (USDC, USDT, DAI)
+var prices = await V4PriceService.GetPricesInAllStablecoinsAsync(
+    web3,
+    quoterAddress,
+    tokenAddress,
+    tokenDecimals: 18,
+    tickSpacing: 60);
+```
+
+## Pool Discovery and Caching
+
+### Initialize Pool Cache
+```csharp
+var poolCache = new V4PoolCache(
+    web3,
+    stateViewAddress: UniswapAddresses.MainnetStateViewV4,
+    poolManagerAddress: UniswapAddresses.MainnetPoolManagerV4,
+    cacheExpiration: TimeSpan.FromHours(24));
+```
+
+### Fetch and Cache Pool Data
+```csharp
+// Get or fetch pool (uses cache if available)
+var pool = await poolCache.GetOrFetchPoolAsync(
+    currency0: eth,
+    currency1: usdc,
+    fee: 500,
+    tickSpacing: 10);
+
+// Access pool information
+var poolId = pool.PoolId;
+var sqrtPriceX96 = pool.SqrtPriceX96;
+var currentTick = pool.Tick;
+var exists = pool.Exists;
+```
+
+### Event-Based Pool Discovery
+```csharp
+// Find all pools containing a specific token using Initialize events
+var pools = await poolCache.FindPoolsForTokenAsync(
+    token: usdc,
+    fromBlockNumber: BigInteger.Zero,
+    toBlockNumber: new BigInteger(21000000));
+
+// Pools are automatically cached for future use
+foreach (var pool in pools)
+{
+    Console.WriteLine($"Pool: {pool.Currency0}/{pool.Currency1}, Fee: {pool.Fee}");
+}
+```
+
+### Manage Cache
+```csharp
+// Refresh specific pool
+var updatedPool = await poolCache.RefreshPoolAsync(poolId);
+
+// Get all cached pools
+var allPools = await poolCache.GetAllCachedPoolsAsync();
+
+// Clear cache
+await poolCache.ClearCacheAsync();
+```
+
+## Position Management
+
+### Creating a New Position
+```csharp
+var positionManager = new PositionManagerService(web3, UniswapAddresses.MainnetPositionManagerV4);
+
+var poolKey = new PoolKey()
+{
+    Currency0 = AddressUtil.ZERO_ADDRESS,
+    Currency1 = usdc,
+    Fee = 500,
+    TickSpacing = 10,
+    Hooks = AddressUtil.ZERO_ADDRESS
+};
+
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+actionsBuilder.AddCommand(new MintPosition()
+{
+    PoolKey = poolKey,
+    TickLower = -600,
+    TickUpper = 600,
+    Liquidity = Web3.Web3.Convert.ToWei(0.01m),
+    Amount0Max = Web3.Web3.Convert.ToWei(0.1m),
+    Amount1Max = Web3.Web3.Convert.ToWei(300, UnitConversion.EthUnit.Mwei),
+    Recipient = account,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
+        AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
+    });
+
+var tokenId = V4PositionReceiptHelper.GetMintedTokenId(receipt, UniswapAddresses.MainnetPositionManagerV4);
+```
+
+### Querying Position Information
+```csharp
+// Get position liquidity
+var liquidity = await positionManager.GetPositionLiquidityQueryAsync(tokenId);
+
+// Get pool key and position info
+var positionInfo = await positionManager.GetPoolAndPositionInfoQueryAsync(tokenId);
+Console.WriteLine($"Pool: {positionInfo.PoolKey.Currency0}/{positionInfo.PoolKey.Currency1}");
+Console.WriteLine($"Fee: {positionInfo.PoolKey.Fee}");
+
+// Decode position details
+var positionInfoBytes = await positionManager.PositionInfoQueryAsync(tokenId);
+var decodedInfo = V4PositionInfoDecoder.DecodePositionInfo(positionInfoBytes);
+Console.WriteLine($"Range: {decodedInfo.TickLower} to {decodedInfo.TickUpper}");
+
+// Get position owner
+var owner = await positionManager.OwnerOfQueryAsync(tokenId);
+```
+
+### Increasing Liquidity
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+actionsBuilder.AddCommand(new IncreaseLiquidity()
+{
+    TokenId = tokenId,
+    Liquidity = Web3.Web3.Convert.ToWei(0.005m),
+    Amount0Max = Web3.Web3.Convert.ToWei(0.05m),
+    Amount1Max = Web3.Web3.Convert.ToWei(150, UnitConversion.EthUnit.Mwei),
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
+        AmountToSend = Web3.Web3.Convert.ToWei(0.05m)
+    });
+```
+
+### Decreasing Liquidity
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = tokenId,
+    Liquidity = Web3.Web3.Convert.ToWei(0.005m),
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60
+    });
+```
+
+### Atomic Position Rebalancing
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+// Close old position
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = oldTokenId,
+    Liquidity = oldLiquidity,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+// Open new position with different range
+actionsBuilder.AddCommand(new MintPosition()
+{
+    PoolKey = poolKey,
+    TickLower = -1200,
+    TickUpper = 1200,
+    Liquidity = Web3.Web3.Convert.ToWei(0.01m),
+    Amount0Max = Web3.Web3.Convert.ToWei(0.1m),
+    Amount1Max = Web3.Web3.Convert.ToWei(300, UnitConversion.EthUnit.Mwei),
+    Recipient = account,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new CloseCurrency() { Currency = eth });
+actionsBuilder.AddCommand(new CloseCurrency() { Currency = usdc });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
+        AmountToSend = Web3.Web3.Convert.ToWei(0.15m)
+    });
+```
+
+### Burning a Position
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = tokenId,
+    Liquidity = totalLiquidity,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new BurnPosition()
+{
+    TokenId = tokenId,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60
+    });
+```
+
+### Collecting Fees
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+// DecreaseLiquidity with liquidity=0 collects fees without removing liquidity
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = tokenId,
+    Liquidity = 0,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60
+    });
+```
+
+### Batch Fee Collection from Multiple Positions
+```csharp
+var actionsBuilder = new V4PositionManagerActionsBuilder();
+
+// Collect fees from position 1
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = tokenId1,
+    Liquidity = 0,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+// Collect fees from position 2
+actionsBuilder.AddCommand(new DecreaseLiquidity()
+{
+    TokenId = tokenId2,
+    Liquidity = 0,
+    Amount0Min = 0,
+    Amount1Min = 0,
+    HookData = new byte[0]
+});
+
+actionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
+
+var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(
+    new ModifyLiquiditiesFunction
+    {
+        UnlockData = actionsBuilder.GetUnlockData(),
+        Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60
+    });
+```
+
+### Calculating Position Value
+```csharp
+var valueCalculator = new V4PositionValueCalculator(
+    web3,
+    UniswapAddresses.MainnetPositionManagerV4,
+    UniswapAddresses.MainnetStateViewV4);
+
+var positionValue = await valueCalculator.GetPositionValueAsync(
+    tokenId,
+    token0Decimals: 18,
+    token1Decimals: 6);
+
+Console.WriteLine($"Amount0: {Web3.Web3.Convert.FromWei(positionValue.Amount0, 18)}");
+Console.WriteLine($"Amount1: {Web3.Web3.Convert.FromWei(positionValue.Amount1, 6)}");
+Console.WriteLine($"Total value in Token0: {positionValue.ValueInToken0}");
+Console.WriteLine($"Total value in Token1: {positionValue.ValueInToken1}");
+```
+
+## Finding Best Swap Paths
+
+### Find Best Direct Path
+```csharp
+var poolCache = new V4PoolCache(
+    web3,
+    UniswapAddresses.MainnetStateViewV4,
+    UniswapAddresses.MainnetPoolManagerV4);
+
+var pathFinder = new V4BestPathFinder(
+    web3,
+    UniswapAddresses.MainnetQuoterV4,
+    poolCache);
+
+var bestPath = await pathFinder.FindBestDirectPathAsync(
+    tokenIn: eth,
+    tokenOut: usdc,
+    amountIn: Web3.Web3.Convert.ToWei(1));
+
+Console.WriteLine($"Best output: {Web3.Web3.Convert.FromWei(bestPath.AmountOut, 6)} USDC");
+Console.WriteLine($"Fee tier: {bestPath.Fees[0]}");
+```
+
+### Find Best Path with Intermediate Tokens
+```csharp
+var weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+var dai = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+
+var bestPath = await pathFinder.FindBestPathAsync(
+    tokenIn: usdc,
+    tokenOut: weth,
+    amountIn: Web3.Web3.Convert.ToWei(1000, UnitConversion.EthUnit.Mwei),
+    intermediateTokens: new[] { dai, eth });
+
+Console.WriteLine($"Best path has {bestPath.Path.Count} hops");
+Console.WriteLine($"Output amount: {Web3.Web3.Convert.FromWei(bestPath.AmountOut, 18)} WETH");
+```
+
+## Token Approval and Balance Validation
+
+### Check and Manage Approvals
+```csharp
+// Check if token is approved
+var approvalStatus = await V4TokenApprovalHelper.CheckApprovalAsync(
+    web3,
+    tokenAddress,
+    owner,
+    spender,
+    requiredAmount);
+
+if (!approvalStatus.IsApproved)
+{
+    // Approve token
+    var txHash = await V4TokenApprovalHelper.ApproveAsync(
+        web3,
+        tokenAddress,
+        spender,
+        V4TokenApprovalHelper.GetMaxApprovalAmount());
+}
+
+// Or check and approve in one call
+await V4TokenApprovalHelper.CheckAndApproveIfNeededAsync(
+    web3,
+    tokenAddress,
+    owner,
+    spender,
+    requiredAmount);
+```
+
+### Validate Token Balances
+```csharp
+// Check single token balance
+var balanceResult = await V4BalanceValidator.ValidateBalanceAsync(
+    web3,
+    tokenAddress,
+    owner,
+    requiredAmount);
+
+if (!balanceResult.HasSufficientBalance)
+{
+    Console.WriteLine($"Insufficient balance. Need {balanceResult.Deficit} more tokens");
+}
+
+// Validate both tokens for liquidity operations
+var hasBalance = await V4BalanceValidator.ValidateBalancesForLiquidityAsync(
+    web3,
+    token0,
+    token1,
+    owner,
+    amount0Required,
+    amount1Required);
+```
+
+## Example Test Files
+
+Complete working examples can be found in the test files:
+- **V4SwapExamples.cs** - Swap operations and Universal Router usage
+- **V4PriceAndQuoteExamples.cs** - Price calculations, slippage, and price impact
+- **V4HelperExamples.cs** - Token approvals, balance validation, and price services
+- **V4PoolCacheExamples.cs** - Pool discovery and caching strategies
+- **V4PositionExamples.cs** - Position management, liquidity operations, and atomic rebalancing
 ```
 
 

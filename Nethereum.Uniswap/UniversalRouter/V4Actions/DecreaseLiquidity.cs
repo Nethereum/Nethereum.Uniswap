@@ -7,17 +7,17 @@ namespace Nethereum.Uniswap.UniversalRouter.V4Actions
     {
         public override byte CommandType { get; set; } = (byte)UniversalRouterV4ActionTypes.DECREASE_LIQUIDITY;
 
-        [Parameter("uint256", "positionId", 1)]
-        public BigInteger PositionId { get; set; }
+        [Parameter("uint256", "tokenId", 1)]
+        public BigInteger TokenId { get; set; }
 
-        [Parameter("uint256", "amount0", 2)]
-        public BigInteger Amount0 { get; set; }
-
-        [Parameter("uint128", "amount1", 3)]
-        public BigInteger Amount1 { get; set; }
-
-        [Parameter("uint128", "liquidity", 4)]
+        [Parameter("uint256", "liquidity", 2)]
         public BigInteger Liquidity { get; set; }
+
+        [Parameter("uint128", "amount0Min", 3)]
+        public BigInteger Amount0Min { get; set; }
+
+        [Parameter("uint128", "amount1Min", 4)]
+        public BigInteger Amount1Min { get; set; }
 
         [Parameter("bytes", "hookData", 5)]
         public byte[] HookData { get; set; }
