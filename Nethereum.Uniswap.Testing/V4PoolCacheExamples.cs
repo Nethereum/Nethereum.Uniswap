@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Net.Http;
+using Nethereum.JsonRpc.Client;
 using System.Threading.Tasks;
 using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
 using PoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
@@ -193,6 +195,60 @@ namespace Nethereum.Uniswap.Testing
             Assert.Equal(AddressUtil.Current.ConvertToChecksumAddress(eth), missingPool.Currency0);
             Assert.Equal(AddressUtil.Current.ConvertToChecksumAddress(usdc), missingPool.Currency1);
         }
+        [Fact]
+        public async Task TestPoolCacheDoesNotPersistFailures()
+        {
+            var failingWeb3 = new Web3.Web3(new RpcClient(new Uri("http://127.0.0.1:0")));
+            var repository = new TrackingPoolCacheRepository();
+            var poolCache = new V4PoolCache(
+                failingWeb3,
+                UniswapAddresses.MainnetStateViewV4,
+                repository: repository,
+                cacheExpiration: TimeSpan.FromSeconds(5));
 
+            var result = await poolCache.GetOrFetchPoolAsync(
+                AddressUtil.ZERO_ADDRESS,
+                "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                500,
+                10);
+
+            Assert.False(result.Exists);
+            Assert.Equal(0, repository.SaveCalls);
+            var cached = await repository.GetAllPoolsAsync();
+            Assert.Empty(cached);
+        }
+
+        private class TrackingPoolCacheRepository : IV4PoolCacheRepository
+        {
+            private readonly System.Collections.Concurrent.ConcurrentDictionary<string, PoolCacheEntry> _entries = new System.Collections.Concurrent.ConcurrentDictionary<string, PoolCacheEntry>(StringComparer.OrdinalIgnoreCase);
+
+            public int SaveCalls { get; private set; }
+
+            public Task<PoolCacheEntry> GetPoolAsync(string poolId)
+            {
+                _entries.TryGetValue(poolId, out var entry);
+                return Task.FromResult(entry);
+            }
+
+            public Task SavePoolAsync(PoolCacheEntry entry)
+            {
+                SaveCalls++;
+                _entries[entry.PoolId] = entry;
+                return Task.CompletedTask;
+            }
+
+            public Task<List<PoolCacheEntry>> GetAllPoolsAsync()
+            {
+                return Task.FromResult(_entries.Values.ToList());
+            }
+
+            public Task ClearAsync()
+            {
+                _entries.Clear();
+                return Task.CompletedTask;
+            }
+        }
     }
 }
+
+

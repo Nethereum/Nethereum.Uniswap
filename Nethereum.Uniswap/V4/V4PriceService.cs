@@ -124,11 +124,7 @@ namespace Nethereum.Uniswap.V4
                     fee,
                     tickSpacing);
 
-                if (price.IsValid && (bestPrice == null || price.Price > 0))
-                {
-                    bestPrice = price;
-                    break;
-                }
+                bestPrice = SelectBetterPrice(bestPrice, price);
             }
 
             return bestPrice ?? new TokenPrice
@@ -170,6 +166,33 @@ namespace Nethereum.Uniswap.V4
             return prices;
         }
 
+        internal static TokenPrice SelectBetterPrice(TokenPrice currentBest, TokenPrice candidate)
+        {
+            if (candidate == null || !candidate.IsValid)
+            {
+                return currentBest;
+            }
+
+            if (currentBest == null || candidate.Price > currentBest.Price)
+            {
+                return candidate;
+            }
+
+            return currentBest;
+        }
+
+        private static decimal SafeFromWei(BigInteger amount, int decimals)
+        {
+            try
+            {
+                return UnitConversion.Convert.FromWei(amount, decimals);
+            }
+            catch (OverflowException)
+            {
+                return amount.Sign >= 0 ? decimal.MaxValue : decimal.MinValue;
+            }
+        }
+
         public static async Task<decimal> GetEthPriceInUsdAsync(
             IWeb3 web3,
             string quoterAddress,
@@ -196,13 +219,19 @@ namespace Nethereum.Uniswap.V4
             int decimalsIn,
             int decimalsOut)
         {
-            var amountInDecimal = (decimal)amountIn / (decimal)Math.Pow(10, decimalsIn);
-            var amountOutDecimal = (decimal)amountOut / (decimal)Math.Pow(10, decimalsOut);
+            var amountInDecimal = SafeFromWei(amountIn, decimalsIn);
+            var amountOutDecimal = SafeFromWei(amountOut, decimalsOut);
+
+            if (amountInDecimal == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amountIn), "Amount must be positive");
+            }
 
             return amountOutDecimal / amountInDecimal;
         }
     }
 }
+
 
 
 

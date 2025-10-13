@@ -140,7 +140,7 @@ namespace Nethereum.Uniswap.Testing
 
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
-            var slippageTolerance = 1.0m;
+            var slippageTolerance = new BigDecimal(1.0m);
             var priceBefore = 3000m;
             var effectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
 
@@ -201,7 +201,7 @@ namespace Nethereum.Uniswap.Testing
 
             var priceImpactResult = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
 
-            var slippageTolerance = 1.0m;
+            var slippageTolerance = new BigDecimal(1.0m);
 
             var quoteWithProtection = V4PriceImpactCalculator.CreateQuoteWithImpact(
                 amountIn,
@@ -257,7 +257,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(actualAmountOut >= quoteWithProtection.MinimumAmountOut);
 
             var actualSlippage = V4SlippageCalculator.CalculateSlippagePercentage(quote.AmountOut, actualAmountOut);
-            Assert.True(actualSlippage <= slippageTolerance * 1.1m);
+            Assert.True(actualSlippage <= slippageTolerance * new BigDecimal(1.1m));
         }
 
         [Fact]
@@ -369,6 +369,7 @@ namespace Nethereum.Uniswap.Testing
 
     }
 }
+
 
 
 

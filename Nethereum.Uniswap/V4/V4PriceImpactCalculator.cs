@@ -1,3 +1,4 @@
+using Nethereum.Util;
 using System;
 using System.Numerics;
 
@@ -29,7 +30,7 @@ namespace Nethereum.Uniswap.V4
         public BigInteger MaximumAmountIn { get; set; }
         public decimal PriceImpactPercentage { get; set; }
         public PriceImpactLevel ImpactLevel { get; set; }
-        public decimal SlippageTolerancePercentage { get; set; }
+        public BigDecimal SlippageTolerancePercentage { get; set; }
         public decimal PriceBefore { get; set; }
         public decimal PriceAfter { get; set; }
         public BigInteger GasEstimate { get; set; }
@@ -125,7 +126,7 @@ namespace Nethereum.Uniswap.V4
         public static V4SwapQuoteWithImpact CreateQuoteWithImpact(
             BigInteger amountIn,
             BigInteger amountOut,
-            decimal slippageTolerancePercentage,
+            BigDecimal slippageTolerancePercentage,
             decimal priceBefore,
             decimal priceAfter,
             BigInteger gasEstimate = default)

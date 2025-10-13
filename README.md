@@ -126,17 +126,17 @@ var amount1 = amounts.Item2;
 
 ### Calculate Slippage-Protected Amounts
 ```csharp
-var slippageCalculator = new V4SlippageCalculator();
-
 // For exact input swaps (you know input, calculate min output)
-var minAmountOut = slippageCalculator.CalculateMinimumAmountOut(
+var tolerance = new BigDecimal(0.5m); // 0.5% slippage
+
+var minAmountOut = V4SlippageCalculator.CalculateMinimumAmountOut(
     expectedAmountOut,
-    slippageTolerancePercent: 0.5m); // 0.5% slippage
+    tolerance);
 
 // For exact output swaps (you know output, calculate max input)
-var maxAmountIn = slippageCalculator.CalculateMaximumAmountIn(
+var maxAmountIn = V4SlippageCalculator.CalculateMaximumAmountIn(
     expectedAmountIn,
-    slippageTolerancePercent: 0.5m);
+    tolerance);
 ```
 
 ### Calculate and Monitor Price Impact
@@ -221,10 +221,13 @@ var exists = pool.Exists;
 ### Event-Based Pool Discovery
 ```csharp
 // Find all pools containing a specific token using Initialize events
+var latestBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
+var startBlock = latestBlock.Value - 100_000; // look back ~100k blocks
+
 var pools = await poolCache.FindPoolsForTokenAsync(
     token: usdc,
-    fromBlockNumber: BigInteger.Zero,
-    toBlockNumber: new BigInteger(21000000));
+    fromBlockNumber: startBlock,
+    toBlockNumber: latestBlock.Value);
 
 // Pools are automatically cached for future use
 foreach (var pool in pools)
@@ -513,13 +516,16 @@ var pathFinder = new V4BestPathFinder(
     UniswapAddresses.MainnetQuoterV4,
     poolCache);
 
-var bestPath = await pathFinder.FindBestDirectPathAsync(
+var cachedPools = await poolCache.GetAllCachedPoolsAsync();
+
+var bestDirectPath = await pathFinder.FindBestDirectPathAsync(
     tokenIn: eth,
     tokenOut: usdc,
-    amountIn: Web3.Web3.Convert.ToWei(1));
+    amountIn: Web3.Web3.Convert.ToWei(1),
+    candidatePools: cachedPools);
 
-Console.WriteLine($"Best output: {Web3.Web3.Convert.FromWei(bestPath.AmountOut, 6)} USDC");
-Console.WriteLine($"Fee tier: {bestPath.Fees[0]}");
+Console.WriteLine($"Best output: {Web3.Web3.Convert.FromWei(bestDirectPath.AmountOut, 6)} USDC");
+Console.WriteLine($"Fee tier: {bestDirectPath.Fees[0]}");
 ```
 
 ### Find Best Path with Intermediate Tokens
@@ -531,12 +537,12 @@ var bestPath = await pathFinder.FindBestPathAsync(
     tokenIn: usdc,
     tokenOut: weth,
     amountIn: Web3.Web3.Convert.ToWei(1000, UnitConversion.EthUnit.Mwei),
-    intermediateTokens: new[] { dai, eth });
+    intermediateTokens: new[] { dai, eth },
+    candidatePools: cachedPools);
 
 Console.WriteLine($"Best path has {bestPath.Path.Count} hops");
 Console.WriteLine($"Output amount: {Web3.Web3.Convert.FromWei(bestPath.AmountOut, 18)} WETH");
 ```
-
 ## Token Approval and Balance Validation
 
 ### Check and Manage Approvals
@@ -835,4 +841,3 @@ To enable hardhat.
     }
 
 ```
-

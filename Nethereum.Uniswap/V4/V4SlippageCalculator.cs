@@ -1,3 +1,4 @@
+using Nethereum.Util;
 using System;
 using System.Numerics;
 
@@ -7,34 +8,36 @@ namespace Nethereum.Uniswap.V4
     {
         public BigInteger OriginalAmount { get; set; }
         public BigInteger AmountWithSlippage { get; set; }
-        public decimal SlippageTolerancePercentage { get; set; }
+        public BigDecimal SlippageTolerancePercentage { get; set; }
         public BigInteger SlippageAmount { get; set; }
     }
 
     public class SlippageValidationResult
     {
         public bool IsValid { get; set; }
-        public decimal ActualSlippagePercentage { get; set; }
-        public decimal TolerancePercentage { get; set; }
+        public BigDecimal ActualSlippagePercentage { get; set; }
+        public BigDecimal TolerancePercentage { get; set; }
         public string Message { get; set; }
     }
 
     public static class V4SlippageCalculator
     {
-        public static SlippageResult CalculateMinimumAmountOut(BigInteger amountOut, decimal slippageTolerancePercentage)
+        private static readonly BigDecimal Zero = new BigDecimal(BigInteger.Zero, 0);
+        private static readonly BigDecimal One = new BigDecimal(BigInteger.One, 0);
+        private static readonly BigDecimal Hundred = new BigDecimal(new BigInteger(100), 0);
+
+        public static SlippageResult CalculateMinimumAmountOut(BigInteger amountOut, BigDecimal slippageTolerancePercentage)
         {
-            if (slippageTolerancePercentage < 0 || slippageTolerancePercentage > 100)
+            ValidatePositiveAmount(amountOut, nameof(amountOut));
+            ValidateTolerance(slippageTolerancePercentage);
+
+            var factor = One - (slippageTolerancePercentage / Hundred);
+            var minimumAmount = (BigInteger)(new BigDecimal(amountOut, 0) * factor);
+            if (minimumAmount < BigInteger.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(slippageTolerancePercentage), "Slippage tolerance must be between 0 and 100");
+                minimumAmount = BigInteger.Zero;
             }
 
-            if (amountOut <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(amountOut), "Amount must be positive");
-            }
-
-            var slippageFactor = 1 - (slippageTolerancePercentage / 100m);
-            var minimumAmount = MultiplyByDecimal(amountOut, slippageFactor);
             var slippageAmount = amountOut - minimumAmount;
 
             return new SlippageResult
@@ -46,20 +49,18 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static SlippageResult CalculateMaximumAmountIn(BigInteger amountIn, decimal slippageTolerancePercentage)
+        public static SlippageResult CalculateMaximumAmountIn(BigInteger amountIn, BigDecimal slippageTolerancePercentage)
         {
-            if (slippageTolerancePercentage < 0 || slippageTolerancePercentage > 100)
+            ValidatePositiveAmount(amountIn, nameof(amountIn));
+            ValidateTolerance(slippageTolerancePercentage);
+
+            var factor = One + (slippageTolerancePercentage / Hundred);
+            var maximumAmount = CeilingToBigInteger(new BigDecimal(amountIn, 0) * factor);
+            if (maximumAmount < BigInteger.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(slippageTolerancePercentage), "Slippage tolerance must be between 0 and 100");
+                maximumAmount = BigInteger.Zero;
             }
 
-            if (amountIn <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(amountIn), "Amount must be positive");
-            }
-
-            var slippageFactor = 1 + (slippageTolerancePercentage / 100m);
-            var maximumAmount = MultiplyByDecimal(amountIn, slippageFactor);
             var slippageAmount = maximumAmount - amountIn;
 
             return new SlippageResult
@@ -71,7 +72,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static decimal CalculateSlippagePercentage(BigInteger expectedAmount, BigInteger actualAmount)
+        public static BigDecimal CalculateSlippagePercentage(BigInteger expectedAmount, BigInteger actualAmount)
         {
             if (expectedAmount <= 0)
             {
@@ -84,15 +85,19 @@ namespace Nethereum.Uniswap.V4
             }
 
             var difference = BigInteger.Abs(expectedAmount - actualAmount);
-            var percentageDecimal = (decimal)difference / (decimal)expectedAmount * 100m;
+            if (difference.IsZero)
+            {
+                return Zero;
+            }
 
-            return percentageDecimal;
+            var ratio = new BigDecimal(difference, 0) / new BigDecimal(expectedAmount, 0);
+            return ratio * Hundred;
         }
 
         public static SlippageValidationResult ValidateSlippage(
             BigInteger expectedAmount,
             BigInteger actualAmount,
-            decimal slippageTolerancePercentage,
+            BigDecimal slippageTolerancePercentage,
             bool isAmountOut = true)
         {
             if (expectedAmount <= 0)
@@ -100,14 +105,15 @@ namespace Nethereum.Uniswap.V4
                 return new SlippageValidationResult
                 {
                     IsValid = false,
-                    ActualSlippagePercentage = 0,
+                    ActualSlippagePercentage = Zero,
                     TolerancePercentage = slippageTolerancePercentage,
                     Message = "Expected amount must be positive"
                 };
             }
 
-            var actualSlippage = CalculateSlippagePercentage(expectedAmount, actualAmount);
+            ValidateTolerance(slippageTolerancePercentage);
 
+            var actualSlippage = CalculateSlippagePercentage(expectedAmount, actualAmount);
             bool isValid;
             string message;
 
@@ -115,15 +121,15 @@ namespace Nethereum.Uniswap.V4
             {
                 isValid = actualAmount >= expectedAmount || actualSlippage <= slippageTolerancePercentage;
                 message = isValid
-                    ? $"Slippage {actualSlippage:F2}% is within tolerance {slippageTolerancePercentage:F2}%"
-                    : $"Slippage {actualSlippage:F2}% exceeds tolerance {slippageTolerancePercentage:F2}%";
+                    ? $"Slippage {actualSlippage}% is within tolerance {slippageTolerancePercentage}%"
+                    : $"Slippage {actualSlippage}% exceeds tolerance {slippageTolerancePercentage}%";
             }
             else
             {
                 isValid = actualAmount <= expectedAmount || actualSlippage <= slippageTolerancePercentage;
                 message = isValid
-                    ? $"Slippage {actualSlippage:F2}% is within tolerance {slippageTolerancePercentage:F2}%"
-                    : $"Slippage {actualSlippage:F2}% exceeds tolerance {slippageTolerancePercentage:F2}%";
+                    ? $"Slippage {actualSlippage}% is within tolerance {slippageTolerancePercentage}%"
+                    : $"Slippage {actualSlippage}% exceeds tolerance {slippageTolerancePercentage}%";
             }
 
             return new SlippageValidationResult
@@ -138,7 +144,7 @@ namespace Nethereum.Uniswap.V4
         public static (BigInteger minAmount0, BigInteger minAmount1) CalculateMinimumLiquidityAmounts(
             BigInteger amount0,
             BigInteger amount1,
-            decimal slippageTolerancePercentage)
+            BigDecimal slippageTolerancePercentage)
         {
             var result0 = CalculateMinimumAmountOut(amount0, slippageTolerancePercentage);
             var result1 = CalculateMinimumAmountOut(amount1, slippageTolerancePercentage);
@@ -146,24 +152,41 @@ namespace Nethereum.Uniswap.V4
             return (result0.AmountWithSlippage, result1.AmountWithSlippage);
         }
 
-        public static BigInteger ApplySlippageTolerance(BigInteger amount, decimal slippageTolerancePercentage, bool isMinimum)
+        public static BigInteger ApplySlippageTolerance(BigInteger amount, BigDecimal slippageTolerancePercentage, bool isMinimum)
         {
-            if (isMinimum)
+            return isMinimum
+                ? CalculateMinimumAmountOut(amount, slippageTolerancePercentage).AmountWithSlippage
+                : CalculateMaximumAmountIn(amount, slippageTolerancePercentage).AmountWithSlippage;
+        }
+
+        private static void ValidatePositiveAmount(BigInteger amount, string parameterName)
+        {
+            if (amount <= 0)
             {
-                return CalculateMinimumAmountOut(amount, slippageTolerancePercentage).AmountWithSlippage;
-            }
-            else
-            {
-                return CalculateMaximumAmountIn(amount, slippageTolerancePercentage).AmountWithSlippage;
+                throw new ArgumentOutOfRangeException(parameterName, "Amount must be positive");
             }
         }
 
-        private static BigInteger MultiplyByDecimal(BigInteger value, decimal multiplier)
+        private static void ValidateTolerance(BigDecimal tolerance)
         {
-            var scaleFactor = 1_000_000m;
-            var scaledMultiplier = (BigInteger)(multiplier * scaleFactor);
-            var result = (value * scaledMultiplier) / (BigInteger)scaleFactor;
-            return result;
+            if (tolerance.CompareTo(Zero) < 0 || tolerance.CompareTo(Hundred) > 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(tolerance), "Slippage tolerance must be between 0 and 100");
+            }
+        
+        private static BigInteger CeilingToBigInteger(BigDecimal value)
+        {
+            if (value.CompareTo(Zero) >= 0)
+            {
+                var floor = value.FloorToBigInteger();
+                var floorDecimal = new BigDecimal(floor, 0);
+                return value.CompareTo(floorDecimal) > 0 ? floor + BigInteger.One : floor;
+            }
+
+            var negated = -value;
+            var floorNegated = negated.FloorToBigInteger();
+            return -floorNegated;
         }
+}
     }
 }

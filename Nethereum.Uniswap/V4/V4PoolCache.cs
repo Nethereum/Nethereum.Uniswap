@@ -149,11 +149,9 @@ namespace Nethereum.Uniswap.V4
                     Exists = false
                 };
 
-                await _repository.SavePoolAsync(entry).ConfigureAwait(false);
                 return entry;
             }
         }
-
         public async Task<List<PoolCacheEntry>> GetAllCachedPoolsAsync()
         {
             return await _repository.GetAllPoolsAsync().ConfigureAwait(false);
@@ -288,3 +286,4 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
