@@ -13,8 +13,8 @@ namespace Nethereum.Uniswap.V4
         public PricingServices(
             IWeb3 web3,
             UniswapV4Addresses addresses,
-            IV4PoolCacheRepository poolCacheRepository,
-            V4QuoterService quoter = null)
+            IV4PoolCacheRepository poolCacheRepository
+           )
         {
             if (web3 == null) throw new ArgumentNullException(nameof(web3));
             if (addresses == null) throw new ArgumentNullException(nameof(addresses));
@@ -39,7 +39,7 @@ namespace Nethereum.Uniswap.V4
 
             
 
-            Quoter = quoter ?? new V4QuoterService(web3, addresses.Quoter);
+            Quoter = new V4QuoterService(web3, addresses.Quoter);
             PathFinder = new V4BestPathFinder(web3, addresses.Quoter, poolCache);
             PathKeyMapper = PathKeyMapper.Current;
         }
