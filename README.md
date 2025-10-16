@@ -1,4 +1,4 @@
-# Nethereum.Uniswap V2, V3, V4, Universal Router and Permit 2
+﻿# Nethereum.Uniswap V2, V3, V4, Universal Router and Permit 2
 
 Uniswap V2, V3, V4, Universal Router and Permit 2 integration with Nethereum.
 
@@ -102,10 +102,10 @@ var priceToken1InToken0 = prices.Item2; // Price of token1 in terms of token0
 ### Tick Math - Convert Between Ticks and Prices
 ```csharp
 // Get sqrt price from tick
-var sqrtPriceX96 = V4TickMath.GetSqrtRatioAtTick(tick);
+var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(tick);
 
 // Get tick from sqrt price
-var tick = V4TickMath.GetTickAtSqrtRatio(sqrtPriceX96);
+var tick = V4TickMath.Current.GetTickAtSqrtRatio(sqrtPriceX96);
 ```
 
 ### Liquidity Math - Calculate Token Amounts
@@ -839,3 +839,4 @@ To enable hardhat.
     }
 
 ```
+

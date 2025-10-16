@@ -1,17 +1,18 @@
-using System;
+﻿using System;
 using System.Numerics;
 using Nethereum.Util;
 
 namespace Nethereum.Uniswap.V4
 {
-    public static class V4TickMath
+    public class V4TickMath
     {
+        public static V4TickMath Current { get; } = new V4TickMath();
         public const int MIN_TICK = -887272;
         public const int MAX_TICK = 887272;
         public static readonly BigInteger MIN_SQRT_RATIO = BigInteger.Parse("4295128739");
         public static readonly BigInteger MAX_SQRT_RATIO = BigInteger.Parse("1461446703485210103287273052203988822378723970342");
 
-        public static BigInteger GetSqrtRatioAtTick(int tick)
+        public BigInteger GetSqrtRatioAtTick(int tick)
         {
             if (tick < MIN_TICK || tick > MAX_TICK)
                 throw new ArgumentOutOfRangeException(nameof(tick), "Tick out of bounds");
@@ -45,7 +46,7 @@ namespace Nethereum.Uniswap.V4
             return (ratio >> 32) + (ratio % (BigInteger.One << 32) == 0 ? BigInteger.Zero : BigInteger.One);
         }
 
-        public static int GetTickAtSqrtRatio(BigInteger sqrtPriceX96)
+        public int GetTickAtSqrtRatio(BigInteger sqrtPriceX96)
         {
             if (sqrtPriceX96 < MIN_SQRT_RATIO || sqrtPriceX96 >= MAX_SQRT_RATIO)
                 throw new ArgumentOutOfRangeException(nameof(sqrtPriceX96), "SqrtPriceX96 out of bounds");
@@ -105,31 +106,31 @@ namespace Nethereum.Uniswap.V4
             return tickLow == tickHi ? tickLow : (GetSqrtRatioAtTick(tickHi) <= sqrtPriceX96 ? tickHi : tickLow);
         }
 
-        public static decimal GetPriceAtTick(int tick)
+        public decimal GetPriceAtTick(int tick)
         {
             var sqrtPriceX96 = GetSqrtRatioAtTick(tick);
-            return V4PriceCalculator.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
+            return V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
         }
 
-        public static decimal GetPriceAtTick(int tick, int decimals0, int decimals1)
+        public decimal GetPriceAtTick(int tick, int decimals0, int decimals1)
         {
             var sqrtPriceX96 = GetSqrtRatioAtTick(tick);
-            return V4PriceCalculator.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, decimals0, decimals1);
+            return V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, decimals0, decimals1);
         }
 
-        public static int GetTickAtPrice(decimal price)
+        public int GetTickAtPrice(decimal price)
         {
-            var sqrtPriceX96 = V4PriceCalculator.CalculateSqrtPriceX96FromPrice(price);
+            var sqrtPriceX96 = V4PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(price);
             return GetTickAtSqrtRatio(sqrtPriceX96);
         }
 
-        public static int GetTickAtPrice(decimal price, int decimals0, int decimals1)
+        public int GetTickAtPrice(decimal price, int decimals0, int decimals1)
         {
-            var sqrtPriceX96 = V4PriceCalculator.CalculateSqrtPriceX96FromPrice(price, decimals0, decimals1);
+            var sqrtPriceX96 = V4PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(price, decimals0, decimals1);
             return GetTickAtSqrtRatio(sqrtPriceX96);
         }
 
-        public static int GetNearestUsableTick(int tick, int tickSpacing)
+        public int GetNearestUsableTick(int tick, int tickSpacing)
         {
             if (tickSpacing <= 0)
                 throw new ArgumentOutOfRangeException(nameof(tickSpacing), "Tick spacing must be positive");
@@ -143,3 +144,6 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -79,7 +79,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
             var sqrtPriceX96 = slot0.SqrtPriceX96;
             var currentTick = slot0.Tick;
 
-            var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(
                 sqrtPriceX96,
                 decodedInfo.TickLower,
                 decodedInfo.TickUpper,
@@ -121,9 +121,9 @@ namespace Nethereum.Uniswap.V4.PositionManager
                 UnclaimedFees1 = unclaimedFees.Fees1,
                 IsInRange = isInRange,
                 HasSubscriber = decodedInfo.HasSubscriber,
-                CurrentPrice = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(sqrtPriceX96),
-                PriceAtTickLower = V4TickMath.GetPriceAtTick(decodedInfo.TickLower),
-                PriceAtTickUpper = V4TickMath.GetPriceAtTick(decodedInfo.TickUpper),
+                CurrentPrice = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96),
+                PriceAtTickLower = V4TickMath.Current.GetPriceAtTick(decodedInfo.TickLower),
+                PriceAtTickUpper = V4TickMath.Current.GetPriceAtTick(decodedInfo.TickUpper),
                 SqrtPriceX96 = sqrtPriceX96,
                 CurrentTick = currentTick
             };
@@ -176,3 +176,8 @@ namespace Nethereum.Uniswap.V4.PositionManager
     }
 
 }
+
+
+
+
+

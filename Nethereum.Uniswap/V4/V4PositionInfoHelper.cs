@@ -36,7 +36,7 @@ namespace Nethereum.Uniswap.V4
             BigInteger liquidity,
             BigInteger sqrtPriceX96)
         {
-            var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
 
             return new V4PositionInfo
             {
@@ -52,9 +52,9 @@ namespace Nethereum.Uniswap.V4
                 Liquidity = liquidity,
                 Amount0 = amounts.Amount0,
                 Amount1 = amounts.Amount1,
-                PriceAtTickLower = V4TickMath.GetPriceAtTick(tickLower),
-                PriceAtTickUpper = V4TickMath.GetPriceAtTick(tickUpper),
-                CurrentPrice = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(sqrtPriceX96)
+                PriceAtTickLower = V4TickMath.Current.GetPriceAtTick(tickLower),
+                PriceAtTickUpper = V4TickMath.Current.GetPriceAtTick(tickUpper),
+                CurrentPrice = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96)
             };
         }
 
@@ -64,3 +64,8 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+
+
+
+

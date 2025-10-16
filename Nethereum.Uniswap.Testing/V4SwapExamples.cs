@@ -1,4 +1,4 @@
-using Nethereum.Uniswap.V4.Contracts.PoolManager;
+﻿using Nethereum.Uniswap.V4.Contracts.PoolManager;
 using Nethereum.Util;
 using System;
 using System.Collections.Generic;
@@ -47,7 +47,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
             var amountIn = Web3.Web3.Convert.ToWei(0.01);
 
@@ -132,7 +132,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
             var usdcService = web3.Eth.ERC20.GetContractService(usdc);
 
@@ -221,8 +221,8 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var dai = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 
-            var poolEthUsdc = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
-            var poolUsdcDai = V4PoolKeyHelper.CreateNormalizedForQuoter(usdc, dai, 500, 10);
+            var poolEthUsdc = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var poolUsdcDai = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(usdc, dai, 500, 10);
 
             var pools = new List<PoolKey> { poolEthUsdc, poolUsdcDai };
             var amountIn = Web3.Web3.Convert.ToWei(0.01);
@@ -307,7 +307,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
             var amountIn = Web3.Web3.Convert.ToWei(0.01);
 
@@ -402,7 +402,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
             var exactAmountOut = 10_000_000;
 
@@ -496,7 +496,7 @@ namespace Nethereum.Uniswap.Testing
             var wbtc = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, wbtc, 3000, 60);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, wbtc, 3000, 60);
 
             var amountIn = Web3.Web3.Convert.ToWei(0.1);
 
@@ -593,11 +593,11 @@ namespace Nethereum.Uniswap.Testing
             var usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
             var wbtc = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
 
-            var poolEthUsdc = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var poolEthUsdc = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
-            var poolUsdcUsdt = V4PoolKeyHelper.CreateNormalizedForQuoter(usdc, usdt, 500, 10);
+            var poolUsdcUsdt = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(usdc, usdt, 500, 10);
 
-            var poolUsdtWbtc = V4PoolKeyHelper.CreateNormalizedForQuoter(usdt, wbtc, 3000, 60);
+            var poolUsdtWbtc = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(usdt, wbtc, 3000, 60);
 
             var pools = new List<PoolKey> { poolEthUsdc, poolUsdcUsdt, poolUsdtWbtc };
             var amountIn = Web3.Web3.Convert.ToWei(0.1);
@@ -682,7 +682,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var pool = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var pool = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
             var amountIn = Web3.Web3.Convert.ToWei(0.01);
             var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey> { pool }, eth);
@@ -784,6 +784,7 @@ namespace Nethereum.Uniswap.Testing
 
     }
 }
+
 
 
 

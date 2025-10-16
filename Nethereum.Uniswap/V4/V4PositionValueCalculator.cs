@@ -1,4 +1,4 @@
-using Nethereum.Uniswap.V4.PositionManager;
+﻿using Nethereum.Uniswap.V4.PositionManager;
 using Nethereum.Uniswap.V4.StateView;
 using Nethereum.Web3;
 using System.Numerics;
@@ -51,13 +51,13 @@ namespace Nethereum.Uniswap.V4
             var poolId = Nethereum.Util.Sha3Keccack.Current.CalculateHash(poolKeyBytes);
             var slot0 = await stateView.GetSlot0QueryAsync(poolId);
 
-            var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(
                 slot0.SqrtPriceX96,
                 decodedInfo.TickLower,
                 decodedInfo.TickUpper,
                 liquidity);
 
-            var priceToken0InToken1 = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(
+            var priceToken0InToken1 = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(
                 slot0.SqrtPriceX96,
                 token0Decimals,
                 token1Decimals);
@@ -99,3 +99,5 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+

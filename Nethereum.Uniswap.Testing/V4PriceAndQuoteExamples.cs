@@ -1,4 +1,4 @@
-using Nethereum.Uniswap.V4.Contracts.PoolManager;
+﻿using Nethereum.Uniswap.V4.Contracts.PoolManager;
 using Nethereum.Util;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace Nethereum.Uniswap.Testing
             var eth = AddressUtil.ZERO_ADDRESS;
 
             var v4Quoter = new V4QuoterService(web3, UniswapAddresses.MainnetQuoterV4);
-            var poolKey = V4PoolKeyHelper.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var poolKey = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
 
             var amountIn = Web3.Web3.Convert.ToWei(1);
@@ -56,13 +56,13 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(quote.AmountOut > 0);
 
             var wethUsdcSqrtPriceX96 = BigInteger.Parse("1987654321098765432109876543210");
-            var priceAfter = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96);
+            var priceAfter = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96);
             Assert.True(priceAfter > 0);
 
-            var priceAfterWithDecimals = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96, 18, 6);
+            var priceAfterWithDecimals = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96, 18, 6);
             Assert.True(priceAfterWithDecimals > 0);
 
-            var poolPrice = V4PriceCalculator.CreatePoolPrice(
+            var poolPrice = V4PriceCalculator.Current.CreatePoolPrice(
                 new byte[] { },
                 eth,
                 usdc,
@@ -369,6 +369,8 @@ namespace Nethereum.Uniswap.Testing
 
     }
 }
+
+
 
 
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Numerics;
 
 namespace Nethereum.Uniswap.V4
@@ -9,11 +9,12 @@ namespace Nethereum.Uniswap.V4
         public BigInteger Amount1 { get; set; }
     }
 
-    public static class V4LiquidityMath
+    public class V4LiquidityMath
     {
+        public static V4LiquidityMath Current { get; } = new V4LiquidityMath();
         private static readonly BigInteger Q96 = BigInteger.One << 96;
 
-        public static BigInteger GetLiquidityForAmount0(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0)
+        public BigInteger GetLiquidityForAmount0(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -22,7 +23,7 @@ namespace Nethereum.Uniswap.V4
             return (amount0 * intermediate) / (sqrtRatioBX96 - sqrtRatioAX96);
         }
 
-        public static BigInteger GetLiquidityForAmount1(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount1)
+        public BigInteger GetLiquidityForAmount1(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount1)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -30,7 +31,7 @@ namespace Nethereum.Uniswap.V4
             return (amount1 * Q96) / (sqrtRatioBX96 - sqrtRatioAX96);
         }
 
-        public static BigInteger GetLiquidityForAmounts(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0, BigInteger amount1)
+        public BigInteger GetLiquidityForAmounts(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0, BigInteger amount1)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -51,7 +52,7 @@ namespace Nethereum.Uniswap.V4
             }
         }
 
-        public static BigInteger GetAmount0ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
+        public BigInteger GetAmount0ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -59,7 +60,7 @@ namespace Nethereum.Uniswap.V4
             return (liquidity * Q96 * (sqrtRatioBX96 - sqrtRatioAX96)) / sqrtRatioBX96 / sqrtRatioAX96;
         }
 
-        public static BigInteger GetAmount1ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
+        public BigInteger GetAmount1ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -67,7 +68,7 @@ namespace Nethereum.Uniswap.V4
             return (liquidity * (sqrtRatioBX96 - sqrtRatioAX96)) / Q96;
         }
 
-        public static LiquidityAmounts GetAmountsForLiquidity(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
+        public LiquidityAmounts GetAmountsForLiquidity(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
                 (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
@@ -96,18 +97,23 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static LiquidityAmounts GetAmountsForLiquidityByTicks(BigInteger sqrtRatioX96, int tickLower, int tickUpper, BigInteger liquidity)
+        public LiquidityAmounts GetAmountsForLiquidityByTicks(BigInteger sqrtRatioX96, int tickLower, int tickUpper, BigInteger liquidity)
         {
-            var sqrtRatioAX96 = V4TickMath.GetSqrtRatioAtTick(tickLower);
-            var sqrtRatioBX96 = V4TickMath.GetSqrtRatioAtTick(tickUpper);
+            var sqrtRatioAX96 = V4TickMath.Current.GetSqrtRatioAtTick(tickLower);
+            var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(tickUpper);
             return GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
         }
 
-        public static BigInteger GetLiquidityForAmountsByTicks(BigInteger sqrtRatioX96, int tickLower, int tickUpper, BigInteger amount0, BigInteger amount1)
+        public BigInteger GetLiquidityForAmountsByTicks(BigInteger sqrtRatioX96, int tickLower, int tickUpper, BigInteger amount0, BigInteger amount1)
         {
-            var sqrtRatioAX96 = V4TickMath.GetSqrtRatioAtTick(tickLower);
-            var sqrtRatioBX96 = V4TickMath.GetSqrtRatioAtTick(tickUpper);
+            var sqrtRatioAX96 = V4TickMath.Current.GetSqrtRatioAtTick(tickLower);
+            var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(tickUpper);
             return GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1);
         }
     }
 }
+
+
+
+
+
