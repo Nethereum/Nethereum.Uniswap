@@ -1,16 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
-using Nethereum.BlockchainProcessing.Services;
-using Nethereum.Contracts;
 using Nethereum.Uniswap.V4.Contracts.PoolManager;
 using Nethereum.Uniswap.V4.Mappers;
-using Nethereum.Uniswap.V4.PoolManager.ContractDefinition;
 using Nethereum.Web3;
-using PositionPoolKey = Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey;
-using QuoterPoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
 
 namespace Nethereum.Uniswap.V4
 {
