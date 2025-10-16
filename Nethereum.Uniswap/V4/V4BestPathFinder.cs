@@ -1,4 +1,5 @@
-﻿using Nethereum.Uniswap.V4.V4Quoter;
+﻿using Nethereum.RPC.Eth.DTOs;
+using Nethereum.Uniswap.V4.V4Quoter;
 using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
 using Nethereum.Util;
 using Nethereum.Web3;
@@ -36,144 +37,174 @@ namespace Nethereum.Uniswap.V4
             _poolCache = poolCache;
         }
 
-        public async Task<SwapPathResult> FindBestDirectPathAsync(
+        public Task<SwapPathResult> FindBestDirectPathAsync(
             string tokenIn,
             string tokenOut,
             BigInteger amountIn,
-            int[] feeTiers = null,
-            int[] tickSpacings = null,
-            IEnumerable<PoolCacheEntry> candidatePools = null)
+            IEnumerable<PoolCacheEntry> candidatePools)
+        {
+            return FindBestDirectPathUsingMultiCallAsync(tokenIn, tokenOut, amountIn, candidatePools);
+        }
+
+        public Task<SwapPathResult> FindBestDirectPathUsingMultiCallAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools)
+        {
+            return FindBestDirectPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                candidatePools,
+                (quoter, quoteParams) => quoter.GetQuotesUsingMultiCallAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        public Task<SwapPathResult> FindBestDirectPathUsingRpcBatchAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools)
+        {
+            return FindBestDirectPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                candidatePools,
+                (quoter, quoteParams) => quoter.GetQuotesUsingRpcBatchAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        private async Task<SwapPathResult> FindBestDirectPathCoreAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            Func<V4QuoterService, IEnumerable<QuoteExactParams>, Task<List<QuoteResult>>> quoteFunc)
         {
             tokenIn = NormalizeAddress(tokenIn);
             tokenOut = NormalizeAddress(tokenOut);
 
             var quoter = new V4QuoterService(_web3, _quoterAddress);
+
+            var lookup = BuildCandidateLookup(candidatePools);
+            var key = CreateTokenPairKey(tokenIn, tokenOut);
+
+            if (!lookup.TryGetValue(key, out var poolsForPair))
+            {
+                return null;
+            }
+
+            // Filter out non-existent pools
+            var validPools = poolsForPair.Where(p => p.Exists).ToList();
+            if (!validPools.Any())
+            {
+                return null;
+            }
+
+            // Build quote params for all valid pools
+            var quoteParamsList = new List<QuoteExactParams>();
+            var poolKeyList = new List<PoolKey>();
+            var candidateList = new List<PoolCacheEntry>();
+
+            foreach (var candidate in validPools)
+            {
+                var poolKey = CreateQuoterPoolKeyFromEntry(candidate);
+                var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
+                    new List<PoolKey> { poolKey },
+                    tokenIn);
+
+                quoteParamsList.Add(new QuoteExactParams
+                {
+                    Path = pathKeys,
+                    ExactAmount = amountIn,
+                    ExactCurrency = tokenIn
+                });
+
+                poolKeyList.Add(poolKey);
+                candidateList.Add(candidate);
+            }
+
+            // Get all quotes using the provided quote function
+            var quoteResults = await quoteFunc(quoter, quoteParamsList).ConfigureAwait(false);
+
+            // Find best result
             SwapPathResult bestPath = null;
             BigInteger bestAmountOut = 0;
 
-            if (candidatePools != null)
+            for (int i = 0; i < quoteResults.Count; i++)
             {
-                var lookup = BuildCandidateLookup(candidatePools);
-                var key = CreateTokenPairKey(tokenIn, tokenOut);
-
-                if (!lookup.TryGetValue(key, out var poolsForPair))
+                var result = quoteResults[i];
+                if (result.Success && result.Output.AmountOut > bestAmountOut)
                 {
-                    return null;
-                }
-
-                foreach (var candidate in poolsForPair)
-                {
-                    if (!candidate.Exists)
+                    bestAmountOut = result.Output.AmountOut;
+                    bestPath = new SwapPathResult
                     {
-                        continue;
-                    }
-
-                    var poolKey = CreateQuoterPoolKeyFromEntry(candidate);
-                    var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
-                        new List<PoolKey> { poolKey },
-                        tokenIn);
-
-                    var quoteParams = new QuoteExactParams
-                    {
-                        Path = pathKeys,
-                        ExactAmount = amountIn,
-                        ExactCurrency = tokenIn
+                        Path = new List<PoolKey> { poolKeyList[i] },
+                        AmountOut = result.Output.AmountOut,
+                        GasEstimate = result.Output.GasEstimate,
+                        Fees = new int[] { candidateList[i].Fee }
                     };
-
-                    try
-                    {
-                        var quote = await quoter.QuoteExactInputQueryAsync(quoteParams).ConfigureAwait(false);
-                        if (quote.AmountOut > bestAmountOut)
-                        {
-                            bestAmountOut = quote.AmountOut;
-                            bestPath = new SwapPathResult
-                            {
-                                Path = new List<PoolKey> { poolKey },
-                                AmountOut = quote.AmountOut,
-                                GasEstimate = quote.GasEstimate,
-                                Fees = new int[] { candidate.Fee }
-                            };
-                        }
-                    }
-                    catch
-                    {
-                        // Skip transient failures and continue evaluating the remaining candidates.
-                    }
-                }
-
-                return bestPath;
-            }
-
-            if (feeTiers == null)
-            {
-                feeTiers = new int[] { 100, 500, 3000, 10000 };
-            }
-            if (tickSpacings == null)
-            {
-                tickSpacings = new int[] { 1, 10, 60, 200 };
-            }
-
-            foreach (var fee in feeTiers)
-            {
-                foreach (var tickSpacing in tickSpacings)
-                {
-                    try
-                    {
-                        var pool = await _poolCache.GetOrFetchPoolAsync(
-                            tokenIn,
-                            tokenOut,
-                            fee,
-                            tickSpacing).ConfigureAwait(false);
-
-                        if (!pool.Exists)
-                        {
-                            continue;
-                        }
-
-                        var poolKey = CreateQuoterPoolKeyFromEntry(pool);
-
-                        var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
-                            new List<PoolKey> { poolKey },
-                            tokenIn);
-
-                        var quoteParams = new QuoteExactParams
-                        {
-                            Path = pathKeys,
-                            ExactAmount = amountIn,
-                            ExactCurrency = tokenIn
-                        };
-
-                        var quote = await quoter.QuoteExactInputQueryAsync(quoteParams).ConfigureAwait(false);
-
-                        if (quote.AmountOut > bestAmountOut)
-                        {
-                            bestAmountOut = quote.AmountOut;
-                            bestPath = new SwapPathResult
-                            {
-                                Path = new List<PoolKey> { poolKey },
-                                AmountOut = quote.AmountOut,
-                                GasEstimate = quote.GasEstimate,
-                                Fees = new int[] { fee }
-                            };
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore failed combinations and continue searching.
-                    }
                 }
             }
 
             return bestPath;
         }
 
-        public async Task<SwapPathResult> FindBestMultihopPathAsync(
+        public Task<SwapPathResult> FindBestMultihopPathAsync(
             string tokenIn,
             string tokenOut,
             BigInteger amountIn,
             string[] intermediateTokens,
-            int maxHops = 3,
-            IEnumerable<PoolCacheEntry> candidatePools = null)
+            IEnumerable<PoolCacheEntry> candidatePools,
+            int maxHops = 3)
+        {
+            return FindBestMultihopPathUsingMultiCallAsync(tokenIn, tokenOut, amountIn, intermediateTokens, candidatePools, maxHops);
+        }
+
+        public Task<SwapPathResult> FindBestMultihopPathUsingMultiCallAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            string[] intermediateTokens,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            int maxHops = 3)
+        {
+            return FindBestMultihopPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                intermediateTokens,
+                candidatePools,
+                maxHops,
+                (quoter, quoteParams) => quoter.GetQuotesUsingMultiCallAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        public Task<SwapPathResult> FindBestMultihopPathUsingRpcBatchAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            string[] intermediateTokens,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            int maxHops = 3)
+        {
+            return FindBestMultihopPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                intermediateTokens,
+                candidatePools,
+                maxHops,
+                (quoter, quoteParams) => quoter.GetQuotesUsingRpcBatchAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        private async Task<SwapPathResult> FindBestMultihopPathCoreAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            string[] intermediateTokens,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            int maxHops,
+            Func<V4QuoterService, IEnumerable<QuoteExactParams>, Task<List<QuoteResult>>> quoteFunc)
         {
             tokenIn = NormalizeAddress(tokenIn);
             tokenOut = NormalizeAddress(tokenOut);
@@ -184,145 +215,94 @@ namespace Nethereum.Uniswap.V4
             }
 
             var normalizedIntermediates = NormalizeTokenArray(intermediateTokens);
+            var lookup = BuildCandidateLookup(candidatePools);
 
-            if (candidatePools != null)
-            {
-                var lookup = BuildCandidateLookup(candidatePools);
-                return await FindBestMultihopPathFromCandidates(
-                    tokenIn,
-                    tokenOut,
-                    amountIn,
-                    normalizedIntermediates,
-                    maxHops,
-                    lookup).ConfigureAwait(false);
-            }
-
-            var routes = EnumerateTokenRoutes(tokenIn, tokenOut, normalizedIntermediates, maxHops)
-                .Where(route => route.Count > 2)
-                .ToList();
-
-            if (!routes.Any())
-            {
-                return null;
-            }
-
-            var quoter = new V4QuoterService(_web3, _quoterAddress);
-            SwapPathResult bestPath = null;
-            BigInteger bestAmountOut = 0;
-
-            var commonFees = new int[] { 500, 3000, 10000 };
-            var commonTickSpacings = new int[] { 10, 60, 200 };
-
-            foreach (var route in routes)
-            {
-                var hopCount = route.Count - 1;
-
-                async Task TraverseAsync(int hopIndex, List<PoolKey> currentPools, List<int> currentFees)
-                {
-                    if (hopIndex == hopCount)
-                    {
-                        try
-                        {
-                            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey>(currentPools), tokenIn);
-                            var quoteParams = new QuoteExactParams
-                            {
-                                Path = pathKeys,
-                                ExactAmount = amountIn,
-                                ExactCurrency = tokenIn
-                            };
-
-                            var quote = await quoter.QuoteExactInputQueryAsync(quoteParams).ConfigureAwait(false);
-
-                            if (quote.AmountOut > bestAmountOut)
-                            {
-                                bestAmountOut = quote.AmountOut;
-                                bestPath = new SwapPathResult
-                                {
-                                    Path = new List<PoolKey>(currentPools),
-                                    AmountOut = quote.AmountOut,
-                                    GasEstimate = quote.GasEstimate,
-                                    Fees = currentFees.ToArray()
-                                };
-                            }
-                        }
-                        catch
-                        {
-                            // Ignore this attempted path – continue searching.
-                        }
-
-                        return;
-                    }
-
-                    var fromToken = route[hopIndex];
-                    var toToken = route[hopIndex + 1];
-
-                    foreach (var fee in commonFees)
-                    {
-                        foreach (var tickSpacing in commonTickSpacings)
-                        {
-                            try
-                            {
-                                var pool = await _poolCache.GetOrFetchPoolAsync(
-                                    fromToken,
-                                    toToken,
-                                    fee,
-                                    tickSpacing).ConfigureAwait(false);
-
-                                if (!pool.Exists)
-                                {
-                                    continue;
-                                }
-
-                                var poolKey = CreateQuoterPoolKeyFromEntry(pool);
-
-                                currentPools.Add(poolKey);
-                                currentFees.Add(pool.Fee);
-
-                                await TraverseAsync(hopIndex + 1, currentPools, currentFees).ConfigureAwait(false);
-
-                                currentPools.RemoveAt(currentPools.Count - 1);
-                                currentFees.RemoveAt(currentFees.Count - 1);
-                            }
-                            catch
-                            {
-                                // Skip this pool combination and continue exploring others.
-                            }
-                        }
-                    }
-                }
-
-                await TraverseAsync(0, new List<PoolKey>(), new List<int>()).ConfigureAwait(false);
-            }
-
-            return bestPath;
-        }
-
-        public async Task<SwapPathResult> FindBestPathAsync(
-            string tokenIn,
-            string tokenOut,
-            BigInteger amountIn,
-            string[] intermediateTokens = null,
-            int maxHops = 3,
-            IEnumerable<PoolCacheEntry> candidatePools = null)
-        {
-            var directPath = await FindBestDirectPathAsync(
+            return await FindBestMultihopPathFromCandidates(
                 tokenIn,
                 tokenOut,
                 amountIn,
-                candidatePools: candidatePools).ConfigureAwait(false);
+                normalizedIntermediates,
+                maxHops,
+                lookup,
+                quoteFunc).ConfigureAwait(false);
+        }
+
+        public Task<SwapPathResult> FindBestPathAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            string[] intermediateTokens = null,
+            int maxHops = 3)
+        {
+            return FindBestPathUsingMultiCallAsync(tokenIn, tokenOut, amountIn, candidatePools, intermediateTokens, maxHops);
+        }
+
+        public Task<SwapPathResult> FindBestPathUsingMultiCallAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            string[] intermediateTokens = null,
+            int maxHops = 3)
+        {
+            return FindBestPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                candidatePools,
+                intermediateTokens,
+                maxHops,
+                (quoter, quoteParams) => quoter.GetQuotesUsingMultiCallAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        public Task<SwapPathResult> FindBestPathUsingRpcBatchAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            string[] intermediateTokens = null,
+            int maxHops = 3)
+        {
+            return FindBestPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                candidatePools,
+                intermediateTokens,
+                maxHops,
+                (quoter, quoteParams) => quoter.GetQuotesUsingRpcBatchAsync(quoteParams, BlockParameter.CreateLatest()));
+        }
+
+        private async Task<SwapPathResult> FindBestPathCoreAsync(
+            string tokenIn,
+            string tokenOut,
+            BigInteger amountIn,
+            IEnumerable<PoolCacheEntry> candidatePools,
+            string[] intermediateTokens,
+            int maxHops,
+            Func<V4QuoterService, IEnumerable<QuoteExactParams>, Task<List<QuoteResult>>> quoteFunc)
+        {
+            var directPath = await FindBestDirectPathCoreAsync(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                candidatePools,
+                quoteFunc).ConfigureAwait(false);
 
             if (intermediateTokens == null || intermediateTokens.Length == 0)
             {
                 return directPath;
             }
 
-            var multihopPath = await FindBestMultihopPathAsync(
+            var multihopPath = await FindBestMultihopPathCoreAsync(
                 tokenIn,
                 tokenOut,
                 amountIn,
                 intermediateTokens,
+                candidatePools,
                 maxHops,
-                candidatePools).ConfigureAwait(false);
+                quoteFunc).ConfigureAwait(false);
 
             if (directPath == null)
             {
@@ -343,7 +323,8 @@ namespace Nethereum.Uniswap.V4
             BigInteger amountIn,
             string[] intermediateTokens,
             int maxHops,
-            Dictionary<string, List<PoolCacheEntry>> candidateLookup)
+            Dictionary<string, List<PoolCacheEntry>> candidateLookup,
+            Func<V4QuoterService, IEnumerable<QuoteExactParams>, Task<List<QuoteResult>>> quoteFunc)
         {
             var routes = EnumerateTokenRoutes(tokenIn, tokenOut, intermediateTokens, maxHops)
                 .Where(route => route.Count > 2)
@@ -355,46 +336,20 @@ namespace Nethereum.Uniswap.V4
             }
 
             var quoter = new V4QuoterService(_web3, _quoterAddress);
-            SwapPathResult bestPath = null;
-            BigInteger bestAmountOut = 0;
+
+            // Collect all possible complete paths
+            var completePaths = new List<(List<PoolKey> pools, List<int> fees)>();
 
             foreach (var route in routes)
             {
                 var hopCount = route.Count - 1;
 
-                async Task TraverseAsync(int hopIndex, List<PoolKey> currentPools, List<int> currentFees)
+                void TraverseSync(int hopIndex, List<PoolKey> currentPools, List<int> currentFees)
                 {
                     if (hopIndex == hopCount)
                     {
-                        try
-                        {
-                            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey>(currentPools), tokenIn);
-                            var quoteParams = new QuoteExactParams
-                            {
-                                Path = pathKeys,
-                                ExactAmount = amountIn,
-                                ExactCurrency = tokenIn
-                            };
-
-                            var quote = await quoter.QuoteExactInputQueryAsync(quoteParams).ConfigureAwait(false);
-
-                            if (quote.AmountOut > bestAmountOut)
-                            {
-                                bestAmountOut = quote.AmountOut;
-                                bestPath = new SwapPathResult
-                                {
-                                    Path = new List<PoolKey>(currentPools),
-                                    AmountOut = quote.AmountOut,
-                                    GasEstimate = quote.GasEstimate,
-                                    Fees = currentFees.ToArray()
-                                };
-                            }
-                        }
-                        catch
-                        {
-                            // Ignore this attempted path – continue searching.
-                        }
-
+                        // Complete path found - add to list
+                        completePaths.Add((new List<PoolKey>(currentPools), new List<int>(currentFees)));
                         return;
                     }
 
@@ -419,14 +374,54 @@ namespace Nethereum.Uniswap.V4
                         currentPools.Add(poolKey);
                         currentFees.Add(candidate.Fee);
 
-                        await TraverseAsync(hopIndex + 1, currentPools, currentFees).ConfigureAwait(false);
+                        TraverseSync(hopIndex + 1, currentPools, currentFees);
 
                         currentPools.RemoveAt(currentPools.Count - 1);
                         currentFees.RemoveAt(currentFees.Count - 1);
                     }
                 }
 
-                await TraverseAsync(0, new List<PoolKey>(), new List<int>()).ConfigureAwait(false);
+                TraverseSync(0, new List<PoolKey>(), new List<int>());
+            }
+
+            if (!completePaths.Any())
+            {
+                return null;
+            }
+
+            // Build quote params for all complete paths
+            var quoteParamsList = completePaths.Select(path =>
+            {
+                var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(path.pools, tokenIn);
+                return new QuoteExactParams
+                {
+                    Path = pathKeys,
+                    ExactAmount = amountIn,
+                    ExactCurrency = tokenIn
+                };
+            }).ToList();
+
+            // Get all quotes using the provided quote function
+            var quoteResults = await quoteFunc(quoter, quoteParamsList).ConfigureAwait(false);
+
+            // Find best result
+            SwapPathResult bestPath = null;
+            BigInteger bestAmountOut = 0;
+
+            for (int i = 0; i < quoteResults.Count; i++)
+            {
+                var result = quoteResults[i];
+                if (result.Success && result.Output.AmountOut > bestAmountOut)
+                {
+                    bestAmountOut = result.Output.AmountOut;
+                    bestPath = new SwapPathResult
+                    {
+                        Path = completePaths[i].pools,
+                        AmountOut = result.Output.AmountOut,
+                        GasEstimate = result.Output.GasEstimate,
+                        Fees = completePaths[i].fees.ToArray()
+                    };
+                }
             }
 
             return bestPath;
