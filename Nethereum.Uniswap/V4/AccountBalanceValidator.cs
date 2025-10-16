@@ -16,10 +16,16 @@ namespace Nethereum.Uniswap.V4
         public string Message { get; set; }
     }
 
-    public static class V4BalanceValidator
+    public class AccountBalanceValidator
     {
-        public static async Task<BalanceValidationResult> ValidateBalanceAsync(
-            IWeb3 web3,
+        public IWeb3 Web3 { get; }
+
+        public AccountBalanceValidator(IWeb3 web3)
+        {
+            Web3 = web3;
+        }
+
+        public async Task<BalanceValidationResult> ValidateBalanceAsync(
             string tokenAddress,
             string owner,
             BigInteger requiredAmount)
@@ -29,11 +35,11 @@ namespace Nethereum.Uniswap.V4
             if (AddressUtil.Current.IsAnEmptyAddress(tokenAddress) ||
                 tokenAddress.Equals(AddressUtil.ZERO_ADDRESS, System.StringComparison.OrdinalIgnoreCase))
             {
-                balance = await web3.Eth.GetBalance.SendRequestAsync(owner);
+                balance = await Web3.Eth.GetBalance.SendRequestAsync(owner);
             }
             else
             {
-                var erc20 = web3.Eth.ERC20.GetContractService(tokenAddress);
+                var erc20 = Web3.Eth.ERC20.GetContractService(tokenAddress);
                 balance = await erc20.BalanceOfQueryAsync(owner);
             }
 
@@ -54,7 +60,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static async Task<bool> ValidateBalancesForLiquidityAsync(
+        public async Task<bool> ValidateBalancesForLiquidityAsync(
             IWeb3 web3,
             string token0,
             string token1,
@@ -62,8 +68,8 @@ namespace Nethereum.Uniswap.V4
             BigInteger amount0Required,
             BigInteger amount1Required)
         {
-            var balance0Result = await ValidateBalanceAsync(web3, token0, owner, amount0Required);
-            var balance1Result = await ValidateBalanceAsync(web3, token1, owner, amount1Required);
+            var balance0Result = await ValidateBalanceAsync(token0, owner, amount0Required);
+            var balance1Result = await ValidateBalanceAsync(token1, owner, amount1Required);
 
             return balance0Result.HasSufficientBalance && balance1Result.HasSufficientBalance;
         }

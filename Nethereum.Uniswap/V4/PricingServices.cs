@@ -19,12 +19,25 @@ namespace Nethereum.Uniswap.V4
             if (web3 == null) throw new ArgumentNullException(nameof(web3));
             if (addresses == null) throw new ArgumentNullException(nameof(addresses));
 
+
+            if (string.IsNullOrWhiteSpace(addresses.StateView))
+            {
+                throw new ArgumentException("State address is required for pricing services", nameof(addresses));
+            }
+
+            if (string.IsNullOrWhiteSpace(addresses.PoolManager))
+            {
+                throw new ArgumentException("PoolManager address is required for pricing services", nameof(addresses));
+            }
+
             var poolCache = new V4PoolCache(web3, addresses.StateView, addresses.PoolManager, poolCacheRepository);
 
             if (string.IsNullOrWhiteSpace(addresses.Quoter))
             {
                 throw new ArgumentException("Quoter address is required for pricing services", nameof(addresses));
             }
+
+            
 
             Quoter = quoter ?? new V4QuoterService(web3, addresses.Quoter);
             PathFinder = new V4BestPathFinder(web3, addresses.Quoter, poolCache);

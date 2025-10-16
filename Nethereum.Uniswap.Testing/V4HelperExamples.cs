@@ -42,7 +42,7 @@ namespace Nethereum.Uniswap.Testing
             var spender = UniswapAddresses.MainnetPositionManagerV4;
             var requiredAmount = Web3.Web3.Convert.ToWei(100, Nethereum.Util.UnitConversion.EthUnit.Mwei);
 
-            var status = await V4TokenApprovalHelper.CheckApprovalAsync(web3, usdc, account, spender, requiredAmount);
+            var status = await new AccountApprovalService(web3).CheckApprovalAsync(usdc, account, spender, requiredAmount);
 
             Assert.NotNull(status);
             Assert.Equal(usdc, status.Token);
@@ -62,7 +62,7 @@ namespace Nethereum.Uniswap.Testing
             var eth = AddressUtil.ZERO_ADDRESS;
             var requiredAmount = Web3.Web3.Convert.ToWei(5);
 
-            var result = await V4BalanceValidator.ValidateBalanceAsync(web3, eth, account, requiredAmount);
+            var result = await new AccountBalanceValidator(web3).ValidateBalanceAsync(eth, account, requiredAmount);
 
             Assert.True(result.HasSufficientBalance);
             Assert.True(result.CurrentBalance >= requiredAmount);

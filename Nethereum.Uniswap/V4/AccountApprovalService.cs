@@ -16,10 +16,17 @@ namespace Nethereum.Uniswap.V4
         public string Owner { get; set; }
     }
 
-    public static class V4TokenApprovalHelper
+    public class AccountApprovalService
     {
-        public static async Task<TokenApprovalStatus> CheckApprovalAsync(
-            IWeb3 web3,
+        public IWeb3 Web3 { get; }
+
+        public AccountApprovalService(IWeb3 web3)
+        {
+            Web3 = web3;
+        }
+
+        public async Task<TokenApprovalStatus> CheckApprovalAsync(
+           
             string tokenAddress,
             string owner,
             string spender,
@@ -39,7 +46,7 @@ namespace Nethereum.Uniswap.V4
                 };
             }
 
-            var erc20 = web3.Eth.ERC20.GetContractService(tokenAddress);
+            var erc20 = Web3.Eth.ERC20.GetContractService(tokenAddress);
             var allowance = await erc20.AllowanceQueryAsync(owner, spender);
 
             return new TokenApprovalStatus
@@ -53,8 +60,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static async Task<string> ApproveAsync(
-            IWeb3 web3,
+        public async Task<string> ApproveAsync(
             string tokenAddress,
             string spender,
             BigInteger amount)
@@ -65,23 +71,23 @@ namespace Nethereum.Uniswap.V4
                 return null;
             }
 
-            var erc20 = web3.Eth.ERC20.GetContractService(tokenAddress);
+            var erc20 = Web3.Eth.ERC20.GetContractService(tokenAddress);
             return await erc20.ApproveRequestAsync(spender, amount);
         }
 
-        public static async Task<TokenApprovalStatus> CheckAndApproveIfNeededAsync(
-            IWeb3 web3,
+        public async Task<TokenApprovalStatus> CheckAndApproveIfNeededAsync(
+            
             string tokenAddress,
             string owner,
             string spender,
             BigInteger requiredAmount)
         {
-            var status = await CheckApprovalAsync(web3, tokenAddress, owner, spender, requiredAmount);
+            var status = await CheckApprovalAsync(tokenAddress, owner, spender, requiredAmount);
 
             if (!status.IsApproved)
             {
-                await ApproveAsync(web3, tokenAddress, spender, requiredAmount);
-                status = await CheckApprovalAsync(web3, tokenAddress, owner, spender, requiredAmount);
+                await ApproveAsync(tokenAddress, spender, requiredAmount);
+                status = await CheckApprovalAsync(tokenAddress, owner, spender, requiredAmount);
             }
 
             return status;
@@ -89,7 +95,7 @@ namespace Nethereum.Uniswap.V4
 
         public static BigInteger GetMaxApprovalAmount()
         {
-            return BigInteger.Parse("115792089237316195423570985008687907853269984665640564039457584007913129639935");
+            return Nethereum.ABI.IntType.GetMaxSignedValue(256);
         }
     }
 }

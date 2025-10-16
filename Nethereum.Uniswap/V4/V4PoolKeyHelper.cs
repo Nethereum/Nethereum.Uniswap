@@ -1,28 +1,32 @@
-using System;
+﻿using System;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Uniswap.V4.PositionManager.ContractDefinition;
+using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
 using PositionPoolKey = Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey;
 using QuoterPoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
 using Nethereum.Util;
 
 namespace Nethereum.Uniswap.V4
 {
-    public static class V4PoolKeyHelper
+    public class V4PoolKeyHelper
     {
-        public static PositionPoolKey CreateNormalized(string currencyA, string currencyB, int fee, int tickSpacing, string hooks = null)
+        public static V4PoolKeyHelper Current { get; } = new V4PoolKeyHelper();
+
+        private readonly AddressUtil _addressUtil = Nethereum.Util.AddressUtil.Current;
+
+        public PositionPoolKey CreateNormalized(string currencyA, string currencyB, int fee, int tickSpacing, string hooks = null)
         {
             if (string.IsNullOrWhiteSpace(currencyA)) throw new ArgumentNullException(nameof(currencyA));
             if (string.IsNullOrWhiteSpace(currencyB)) throw new ArgumentNullException(nameof(currencyB));
 
-            var addressUtil = AddressUtil.Current;
-
-            var checksumA = addressUtil.ConvertToChecksumAddress(currencyA);
-            var checksumB = addressUtil.ConvertToChecksumAddress(currencyB);
+            var checksumA = _addressUtil.ConvertToChecksumAddress(currencyA);
+            var checksumB = _addressUtil.ConvertToChecksumAddress(currencyB);
 
             var (currency0, currency1) = OrderPair(checksumA, checksumB);
 
             var normalizedHooks = string.IsNullOrEmpty(hooks)
                 ? AddressUtil.ZERO_ADDRESS
-                : addressUtil.ConvertToChecksumAddress(hooks);
+                : _addressUtil.ConvertToChecksumAddress(hooks);
 
             return new PositionPoolKey
             {
@@ -34,19 +38,25 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static QuoterPoolKey CreateNormalizedForQuoter(string currencyA, string currencyB, int fee, int tickSpacing, string hooks = null)
+        public QuoterPoolKey CreateNormalizedForQuoter(string currencyA, string currencyB, int fee, int tickSpacing, string hooks = null)
         {
             var normalized = CreateNormalized(currencyA, currencyB, fee, tickSpacing, hooks);
             return ToQuoterPoolKey(normalized);
         }
 
-        public static PositionPoolKey Normalize(PositionPoolKey poolKey)
+        public PositionPoolKey Normalize(PositionPoolKey poolKey)
         {
             if (poolKey == null) throw new ArgumentNullException(nameof(poolKey));
             return CreateNormalized(poolKey.Currency0, poolKey.Currency1, (int)poolKey.Fee, poolKey.TickSpacing, poolKey.Hooks);
         }
 
-        public static QuoterPoolKey ToQuoterPoolKey(PositionPoolKey poolKey)
+        public PositionPoolKey Normalize(QuoterPoolKey poolKey)
+        {
+            if (poolKey == null) throw new ArgumentNullException(nameof(poolKey));
+            return CreateNormalized(poolKey.Currency0, poolKey.Currency1, (int)poolKey.Fee, poolKey.TickSpacing, poolKey.Hooks);
+        }
+
+        public QuoterPoolKey ToQuoterPoolKey(PositionPoolKey poolKey)
         {
             var normalized = Normalize(poolKey);
             return new QuoterPoolKey
@@ -59,7 +69,34 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        private static (string currency0, string currency1) OrderPair(string currencyA, string currencyB)
+        public PositionPoolKey FromQuoterPoolKey(QuoterPoolKey poolKey)
+        {
+            return Normalize(poolKey);
+        }
+
+        public string CalculatePoolId(PositionPoolKey poolKey)
+        {
+            return CalculatePoolIdBytes(poolKey).ToHex(false);
+        }
+
+        public string CalculatePoolId(QuoterPoolKey poolKey)
+        {
+            return CalculatePoolId(FromQuoterPoolKey(poolKey));
+        }
+
+        public byte[] CalculatePoolIdBytes(PositionPoolKey poolKey)
+        {
+            var normalized = Normalize(poolKey);
+            var encoded = normalized.EncodePoolKey();
+            return Sha3Keccack.Current.CalculateHash(encoded);
+        }
+
+        public byte[] CalculatePoolIdBytes(QuoterPoolKey poolKey)
+        {
+            return CalculatePoolIdBytes(FromQuoterPoolKey(poolKey));
+        }
+
+        private (string currency0, string currency1) OrderPair(string currencyA, string currencyB)
         {
             var bytesA = currencyA.HexToByteArray();
             var bytesB = currencyB.HexToByteArray();
@@ -83,3 +120,6 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+
+

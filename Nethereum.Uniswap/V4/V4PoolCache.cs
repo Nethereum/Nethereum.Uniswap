@@ -1,4 +1,4 @@
-using Nethereum.Hex.HexConvertors.Extensions;
+﻿using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Uniswap.V4.PoolManager;
 using Nethereum.Uniswap.V4.PoolManager.ContractDefinition;
 using Nethereum.Uniswap.V4.StateView;
@@ -70,6 +70,7 @@ namespace Nethereum.Uniswap.V4
         private readonly IWeb3 _web3;
         private readonly string _stateViewAddress;
         private readonly string _poolManagerAddress;
+        private readonly V4PoolKeyHelper _poolKeyHelper;
         private readonly IV4PoolCacheRepository _repository;
         private readonly TimeSpan _cacheExpiration;
 
@@ -78,13 +79,15 @@ namespace Nethereum.Uniswap.V4
             string stateViewAddress,
             string poolManagerAddress = null,
             IV4PoolCacheRepository repository = null,
-            TimeSpan? cacheExpiration = null)
+            TimeSpan? cacheExpiration = null
+           )
         {
             _web3 = web3;
             _stateViewAddress = stateViewAddress;
             _poolManagerAddress = poolManagerAddress;
             _repository = repository ?? new InMemoryPoolCacheRepository();
             _cacheExpiration = cacheExpiration ?? TimeSpan.FromHours(24);
+            _poolKeyHelper = V4PoolKeyHelper.Current;
         }
 
         public async Task<PoolCacheEntry> GetOrFetchPoolAsync(
@@ -94,7 +97,7 @@ namespace Nethereum.Uniswap.V4
             int tickSpacing,
             string hooks = null)
         {
-            var normalizedPoolKey = V4PoolKeyHelper.CreateNormalized(currency0, currency1, fee, tickSpacing, hooks);
+            var normalizedPoolKey = _poolKeyHelper.CreateNormalized(currency0, currency1, fee, tickSpacing, hooks);
             var poolId = CalculatePoolId(normalizedPoolKey);
 
             var cached = await _repository.GetPoolAsync(poolId).ConfigureAwait(false);
@@ -110,7 +113,7 @@ namespace Nethereum.Uniswap.V4
             Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey,
             string poolId)
         {
-            var normalizedPoolKey = V4PoolKeyHelper.Normalize(poolKey);
+            var normalizedPoolKey = _poolKeyHelper.Normalize(poolKey);
             var stateView = new StateViewService(_web3, _stateViewAddress);
 
             try
@@ -170,19 +173,19 @@ namespace Nethereum.Uniswap.V4
                 return null;
             }
 
-            var normalizedPoolKey = V4PoolKeyHelper.CreateNormalized(cached.Currency0, cached.Currency1, cached.Fee, cached.TickSpacing, cached.Hooks);
+            var normalizedPoolKey = _poolKeyHelper.CreateNormalized(cached.Currency0, cached.Currency1, cached.Fee, cached.TickSpacing, cached.Hooks);
             return await FetchAndCachePoolAsync(normalizedPoolKey, poolId).ConfigureAwait(false);
         }
 
        
-        public static string CalculatePoolId(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
+        public string CalculatePoolId(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
         {
             return CalculatePoolIdBytes(poolKey).ToHex(false);
         }
 
-        public static byte[] CalculatePoolIdBytes(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
+        public byte[] CalculatePoolIdBytes(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
         {
-            var normalized = V4PoolKeyHelper.Normalize(poolKey);
+            var normalized = _poolKeyHelper.Normalize(poolKey);
             var encoded = normalized.EncodePoolKey();
             return Sha3Keccack.Current.CalculateHash(encoded);
         }
@@ -223,7 +226,7 @@ namespace Nethereum.Uniswap.V4
             foreach (var evt in events)
             {
                 var poolId = evt.Event.Id.ToHex(false);
-                var normalizedPoolKey = V4PoolKeyHelper.CreateNormalized(evt.Event.Currency0, evt.Event.Currency1, (int)evt.Event.Fee, evt.Event.TickSpacing, evt.Event.Hooks);
+                var normalizedPoolKey = _poolKeyHelper.CreateNormalized(evt.Event.Currency0, evt.Event.Currency1, (int)evt.Event.Fee, evt.Event.TickSpacing, evt.Event.Hooks);
 
                 var entry = new PoolCacheEntry
                 {
@@ -247,4 +250,6 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+
 

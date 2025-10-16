@@ -10,9 +10,7 @@ namespace Nethereum.Uniswap.V4
     /// </summary>
     public class PositionServices
     {
-        public PositionServices(
-            IWeb3 web3,
-            UniswapV4Addresses addresses)
+        public PositionServices(IWeb3 web3, UniswapV4Addresses addresses)
         {
             if (web3 == null) throw new ArgumentNullException(nameof(web3));
             if (addresses == null) throw new ArgumentNullException(nameof(addresses));

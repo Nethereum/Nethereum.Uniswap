@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace Nethereum.Uniswap.V4
 {
@@ -21,9 +21,8 @@ namespace Nethereum.Uniswap.V4
         public decimal CurrentPrice { get; set; }
     }
 
-    public static class V4PositionInfoHelper
-    {
-        public static V4PositionInfo CreatePositionInfo(
+    public class V4PositionInfoHelper\r\n    {\r\n        public V4PositionInfoHelper Current { get; } = new V4PositionInfoHelper();
+        public V4PositionInfo CreatePositionInfo(
             BigInteger tokenId,
             byte[] poolId,
             string currency0,
@@ -36,7 +35,7 @@ namespace Nethereum.Uniswap.V4
             BigInteger liquidity,
             BigInteger sqrtPriceX96)
         {
-            var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
 
             return new V4PositionInfo
             {
@@ -52,15 +51,21 @@ namespace Nethereum.Uniswap.V4
                 Liquidity = liquidity,
                 Amount0 = amounts.Amount0,
                 Amount1 = amounts.Amount1,
-                PriceAtTickLower = V4TickMath.GetPriceAtTick(tickLower),
-                PriceAtTickUpper = V4TickMath.GetPriceAtTick(tickUpper),
-                CurrentPrice = V4PriceCalculator.CalculatePriceFromSqrtPriceX96(sqrtPriceX96)
+                PriceAtTickLower = V4TickMath.Current.Current.GetPriceAtTick(tickLower),
+                PriceAtTickUpper = V4TickMath.Current.Current.GetPriceAtTick(tickUpper),
+                CurrentPrice = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96)
             };
         }
 
-        public static bool IsPositionInRange(int currentTick, int tickLower, int tickUpper)
+        public bool IsPositionInRange(int currentTick, int tickLower, int tickUpper)
         {
             return currentTick >= tickLower && currentTick < tickUpper;
         }
     }
 }
+
+
+
+
+
+

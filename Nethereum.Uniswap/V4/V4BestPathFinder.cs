@@ -510,7 +510,7 @@ namespace Nethereum.Uniswap.V4
 
         private static PoolKey CreateQuoterPoolKeyFromEntry(PoolCacheEntry entry)
         {
-            return V4PoolKeyHelper.CreateNormalizedForQuoter(
+            return V4PoolKeyHelper.Current.CreateNormalizedForQuoter(
                 entry.Currency0,
                 entry.Currency1,
                 entry.Fee,
