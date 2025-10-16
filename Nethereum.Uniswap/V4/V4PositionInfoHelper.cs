@@ -21,9 +21,10 @@ namespace Nethereum.Uniswap.V4
         public decimal CurrentPrice { get; set; }
     }
 
-    public static class V4PositionInfoHelper
+    public  class V4PositionInfoHelper
     {
-        public static V4PositionInfo CreatePositionInfo(
+        public static V4PositionInfoHelper Current { get; } = new V4PositionInfoHelper();
+        public  V4PositionInfo CreatePositionInfo(
             BigInteger tokenId,
             byte[] poolId,
             string currency0,
@@ -58,7 +59,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static bool IsPositionInRange(int currentTick, int tickLower, int tickUpper)
+        public  bool IsPositionInRange(int currentTick, int tickLower, int tickUpper)
         {
             return currentTick >= tickLower && currentTick < tickUpper;
         }

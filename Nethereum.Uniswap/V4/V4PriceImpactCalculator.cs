@@ -38,13 +38,14 @@ namespace Nethereum.Uniswap.V4
         public string Warning { get; set; }
     }
 
-    public static class V4PriceImpactCalculator
+    public  class V4PriceImpactCalculator
     {
+        public static V4PriceImpactCalculator Current = new V4PriceImpactCalculator();
         private const decimal LOW_IMPACT_THRESHOLD = 1.0m;
         private const decimal MEDIUM_IMPACT_THRESHOLD = 3.0m;
         private const decimal HIGH_IMPACT_THRESHOLD = 5.0m;
 
-        public static PriceImpactResult CalculatePriceImpact(decimal priceBefore, decimal priceAfter)
+        public  PriceImpactResult CalculatePriceImpact(decimal priceBefore, decimal priceAfter)
         {
             if (priceBefore <= 0)
             {
@@ -73,7 +74,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static PriceImpactResult CalculatePriceImpactFromReserves(
+        public  PriceImpactResult CalculatePriceImpactFromReserves(
             BigInteger amountIn,
             BigInteger reserveIn,
             BigInteger reserveOut)
@@ -98,7 +99,7 @@ namespace Nethereum.Uniswap.V4
             return CalculatePriceImpact(priceBefore, priceAfter);
         }
 
-        public static PriceImpactLevel GetPriceImpactLevel(decimal impactPercentage)
+        public  PriceImpactLevel GetPriceImpactLevel(decimal impactPercentage)
         {
             if (impactPercentage < LOW_IMPACT_THRESHOLD)
             {
@@ -118,12 +119,12 @@ namespace Nethereum.Uniswap.V4
             }
         }
 
-        public static bool IsExcessivePriceImpact(decimal impactPercentage, decimal thresholdPercentage = HIGH_IMPACT_THRESHOLD)
+        public  bool IsExcessivePriceImpact(decimal impactPercentage, decimal thresholdPercentage = HIGH_IMPACT_THRESHOLD)
         {
             return impactPercentage >= thresholdPercentage;
         }
 
-        public static V4SwapQuoteWithImpact CreateQuoteWithImpact(
+        public  V4SwapQuoteWithImpact CreateQuoteWithImpact(
             BigInteger amountIn,
             BigInteger amountOut,
             BigDecimal slippageTolerancePercentage,
@@ -131,8 +132,8 @@ namespace Nethereum.Uniswap.V4
             decimal priceAfter,
             BigInteger gasEstimate = default)
         {
-            var minimumAmountOut = V4SlippageCalculator.CalculateMinimumAmountOut(amountOut, slippageTolerancePercentage);
-            var maximumAmountIn = V4SlippageCalculator.CalculateMaximumAmountIn(amountIn, slippageTolerancePercentage);
+            var minimumAmountOut = V4SlippageCalculator.Current.CalculateMinimumAmountOut(amountOut, slippageTolerancePercentage);
+            var maximumAmountIn = V4SlippageCalculator.Current.CalculateMaximumAmountIn(amountIn, slippageTolerancePercentage);
             var priceImpact = CalculatePriceImpact(priceBefore, priceAfter);
 
             return new V4SwapQuoteWithImpact
@@ -152,7 +153,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        private static string GetImpactMessage(decimal impactPercentage, PriceImpactLevel level)
+        private  string GetImpactMessage(decimal impactPercentage, PriceImpactLevel level)
         {
             switch (level)
             {
@@ -169,7 +170,7 @@ namespace Nethereum.Uniswap.V4
             }
         }
 
-        public static decimal CalculateEffectivePrice(BigInteger amountIn, BigInteger amountOut, int decimalsIn, int decimalsOut)
+        public  decimal CalculateEffectivePrice(BigInteger amountIn, BigInteger amountOut, int decimalsIn, int decimalsOut)
         {
             if (amountOut == 0)
             {
@@ -182,7 +183,7 @@ namespace Nethereum.Uniswap.V4
             return amountInDecimal / amountOutDecimal;
         }
 
-        public static decimal CalculatePriceImpactFromEffectivePrices(decimal spotPrice, decimal effectivePrice)
+        public  decimal CalculatePriceImpactFromEffectivePrices(decimal spotPrice, decimal effectivePrice)
         {
             if (spotPrice <= 0)
             {

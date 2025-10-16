@@ -10,13 +10,14 @@ namespace Nethereum.Uniswap.V4
         public bool HasSubscriber { get; set; }
     }
 
-    public static class V4PositionInfoDecoder
+    public  class V4PositionInfoDecoder
     {
+        public static V4PositionInfoDecoder Current { get; } = new V4PositionInfoDecoder();
         private const int TICK_LOWER_OFFSET = 8;
         private const int TICK_UPPER_OFFSET = 32;
         private const int POOL_ID_OFFSET = 56;
 
-        public static PositionInfoPacked DecodePositionInfo(BigInteger packedInfo)
+        public  PositionInfoPacked DecodePositionInfo(BigInteger packedInfo)
         {
             var hasSubscriber = ExtractHasSubscriber(packedInfo);
             var tickLower = ExtractTickLower(packedInfo);
@@ -32,14 +33,14 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static bool ExtractHasSubscriber(BigInteger packedInfo)
+        public  bool ExtractHasSubscriber(BigInteger packedInfo)
         {
             var mask = new BigInteger(0xFF);
             var value = packedInfo & mask;
             return value != 0;
         }
 
-        public static int ExtractTickLower(BigInteger packedInfo)
+        public  int ExtractTickLower(BigInteger packedInfo)
         {
             var shifted = packedInfo >> TICK_LOWER_OFFSET;
             var mask = new BigInteger(0xFFFFFF);
@@ -47,7 +48,7 @@ namespace Nethereum.Uniswap.V4
             return SignExtend24Bit((int)value);
         }
 
-        public static int ExtractTickUpper(BigInteger packedInfo)
+        public  int ExtractTickUpper(BigInteger packedInfo)
         {
             var shifted = packedInfo >> TICK_UPPER_OFFSET;
             var mask = new BigInteger(0xFFFFFF);
@@ -55,7 +56,7 @@ namespace Nethereum.Uniswap.V4
             return SignExtend24Bit((int)value);
         }
 
-        public static byte[] ExtractPoolId(BigInteger packedInfo)
+        public  byte[] ExtractPoolId(BigInteger packedInfo)
         {
             var shifted = packedInfo >> POOL_ID_OFFSET;
             var poolIdBytes = shifted.ToByteArray();
@@ -67,7 +68,7 @@ namespace Nethereum.Uniswap.V4
             return result;
         }
 
-        private static int SignExtend24Bit(int value)
+        private  int SignExtend24Bit(int value)
         {
             const int signBit = 0x800000;
             const int mask = 0xFFFFFF;
@@ -82,7 +83,7 @@ namespace Nethereum.Uniswap.V4
             return value;
         }
 
-        public static BigInteger EncodePositionInfo(byte[] poolId, int tickLower, int tickUpper, bool hasSubscriber = false)
+        public  BigInteger EncodePositionInfo(byte[] poolId, int tickLower, int tickUpper, bool hasSubscriber = false)
         {
             BigInteger result = 0;
 

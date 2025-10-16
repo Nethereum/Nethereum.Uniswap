@@ -102,8 +102,8 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var priceBefore = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
-            var priceImpact = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(priceBefore, effectivePrice);
+            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var priceImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(priceBefore, effectivePrice);
 
             Assert.True(quote.AmountOut > 0);
             Assert.True(effectivePrice > 0);
@@ -142,9 +142,9 @@ namespace Nethereum.Uniswap.Testing
 
             var slippageTolerance = new BigDecimal(1.0m);
             var priceBefore = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
 
-            var quoteWithImpact = V4PriceImpactCalculator.CreateQuoteWithImpact(
+            var quoteWithImpact = V4PriceImpactCalculator.Current.CreateQuoteWithImpact(
                 amountIn,
                 quote.AmountOut,
                 slippageTolerance,
@@ -197,13 +197,13 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var spotPrice = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
 
-            var priceImpactResult = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
+            var priceImpactResult = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
 
             var slippageTolerance = new BigDecimal(1.0m);
 
-            var quoteWithProtection = V4PriceImpactCalculator.CreateQuoteWithImpact(
+            var quoteWithProtection = V4PriceImpactCalculator.Current.CreateQuoteWithImpact(
                 amountIn,
                 quote.AmountOut,
                 slippageTolerance,
@@ -256,7 +256,7 @@ namespace Nethereum.Uniswap.Testing
 
             Assert.True(actualAmountOut >= quoteWithProtection.MinimumAmountOut);
 
-            var actualSlippage = V4SlippageCalculator.CalculateSlippagePercentage(quote.AmountOut, actualAmountOut);
+            var actualSlippage = V4SlippageCalculator.Current.CalculateSlippagePercentage(quote.AmountOut, actualAmountOut);
             Assert.True(actualSlippage <= slippageTolerance * new BigDecimal(1.1m));
         }
 
@@ -298,11 +298,11 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var spotPrice = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(largeAmountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, quote.AmountOut, 18, 6);
 
-            var priceImpact = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
+            var priceImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
 
-            var impactLevel = V4PriceImpactCalculator.GetPriceImpactLevel(priceImpact);
+            var impactLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(priceImpact);
 
             Assert.True(quote.AmountOut > 0);
             Assert.True(priceImpact > 0);
@@ -350,16 +350,16 @@ namespace Nethereum.Uniswap.Testing
             var smallQuote = await v4Quoter.QuoteExactInputQueryAsync(smallQuoteParams);
             var largeQuote = await v4Quoter.QuoteExactInputQueryAsync(largeQuoteParams);
 
-            var smallEffectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(smallAmountIn, smallQuote.AmountOut, 18, 6);
-            var largeEffectivePrice = V4PriceImpactCalculator.CalculateEffectivePrice(largeAmountIn, largeQuote.AmountOut, 18, 6);
+            var smallEffectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(smallAmountIn, smallQuote.AmountOut, 18, 6);
+            var largeEffectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, largeQuote.AmountOut, 18, 6);
 
             var spotPrice = smallEffectivePrice;
 
-            var smallImpact = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(spotPrice, smallEffectivePrice);
-            var largeImpact = V4PriceImpactCalculator.CalculatePriceImpactFromEffectivePrices(spotPrice, largeEffectivePrice);
+            var smallImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, smallEffectivePrice);
+            var largeImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, largeEffectivePrice);
 
-            var smallLevel = V4PriceImpactCalculator.GetPriceImpactLevel(smallImpact);
-            var largeLevel = V4PriceImpactCalculator.GetPriceImpactLevel(largeImpact);
+            var smallLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(smallImpact);
+            var largeLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(largeImpact);
 
             Assert.True(smallQuote.AmountOut > 0);
             Assert.True(largeQuote.AmountOut > 0);
@@ -369,6 +369,8 @@ namespace Nethereum.Uniswap.Testing
 
     }
 }
+
+
 
 
 

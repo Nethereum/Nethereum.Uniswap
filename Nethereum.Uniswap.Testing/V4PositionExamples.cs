@@ -1,4 +1,4 @@
-using Nethereum.Contracts;
+﻿using Nethereum.Contracts;
 using Nethereum.Uniswap.V4;
 using Nethereum.Uniswap.V4.PositionManager.ContractDefinition;
 using Nethereum.Util;
@@ -38,8 +38,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = true;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.DecodePositionInfo(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -55,8 +55,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 5000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extractedTick = V4PositionInfoDecoder.ExtractTickLower(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extractedTick = V4PositionInfoDecoder.Current.ExtractTickLower(encoded);
 
             Assert.Equal(tickLower, extractedTick);
         }
@@ -69,8 +69,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 5000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extractedTick = V4PositionInfoDecoder.ExtractTickUpper(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extractedTick = V4PositionInfoDecoder.Current.ExtractTickUpper(encoded);
 
             Assert.Equal(tickUpper, extractedTick);
         }
@@ -83,8 +83,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = true;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extracted = V4PositionInfoDecoder.ExtractHasSubscriber(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extracted = V4PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
 
             Assert.True(extracted);
         }
@@ -97,8 +97,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extracted = V4PositionInfoDecoder.ExtractHasSubscriber(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extracted = V4PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
 
             Assert.False(extracted);
         }
@@ -112,8 +112,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = -100;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.DecodePositionInfo(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -130,8 +130,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 887272; // MAX_TICK
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.DecodePositionInfo(encoded);
+            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -150,7 +150,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.True(isInRange, "Position should be in range when currentTick is between tickLower and tickUpper");
         }
@@ -162,7 +162,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.False(isInRange, "Position should not be in range when currentTick is below tickLower");
         }
@@ -174,7 +174,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.False(isInRange, "Position should not be in range when currentTick is at or above tickUpper");
         }
@@ -186,11 +186,11 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
 
             // Test at lower boundary (should be in range)
-            Assert.True(V4PositionInfoHelper.IsPositionInRange(tickLower, tickLower, tickUpper),
+            Assert.True(V4PositionInfoHelper.Current.IsPositionInRange(tickLower, tickLower, tickUpper),
                 "Position should be in range when currentTick equals tickLower");
 
             // Test at upper boundary (should NOT be in range, as per Uniswap convention)
-            Assert.False(V4PositionInfoHelper.IsPositionInRange(tickUpper, tickLower, tickUpper),
+            Assert.False(V4PositionInfoHelper.Current.IsPositionInRange(tickUpper, tickLower, tickUpper),
                 "Position should NOT be in range when currentTick equals tickUpper");
         }
 
@@ -208,9 +208,9 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = -1000;
             int tickUpper = 1000;
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
-            BigInteger sqrtPriceX96 = V4TickMath.GetSqrtRatioAtTick(0);
+            BigInteger sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
 
-            var positionInfo = V4PositionInfoHelper.CreatePositionInfo(
+            var positionInfo = V4PositionInfoHelper.Current.CreatePositionInfo(
                 tokenId, poolId, currency0, currency1, fee, tickSpacing, hooks,
                 tickLower, tickUpper, liquidity, sqrtPriceX96);
 
@@ -239,7 +239,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger sqrtPriceX96Upper = BigInteger.Parse("300000000000000000000"); // Upper bound
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.GetAmountsForLiquidity(sqrtPriceX96Current, sqrtPriceX96Lower, sqrtPriceX96Upper, liquidity);
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidity(sqrtPriceX96Current, sqrtPriceX96Lower, sqrtPriceX96Upper, liquidity);
 
             Assert.True(amounts.Amount0 > 0, $"Amount0 should be positive when in range. Got: {amounts.Amount0}");
             Assert.True(amounts.Amount1 > 0, $"Amount1 should be positive when in range. Got: {amounts.Amount1}");
@@ -253,9 +253,9 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 2000;
             int currentTick = 100; // Below range
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
-            BigInteger sqrtPriceX96 = V4TickMath.GetSqrtRatioAtTick(currentTick);
+            BigInteger sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(currentTick);
 
-            var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
+            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
 
             // When price is below range, only amount0 should be non-zero
             Assert.True(amounts.Amount0 > 0 || amounts.Amount1 > 0, "At least one amount should be positive");
@@ -269,7 +269,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger feeGrowthLast = BigInteger.Parse("1000000000000000000000000000");
             BigInteger feeGrowthCurrent = BigInteger.Parse("2000000000000000000000000000");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthLast,
                 feeGrowthLast,
@@ -287,8 +287,8 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = -1000;
             int tickUpper = 1000;
 
-            decimal priceLower = V4TickMath.GetPriceAtTick(tickLower);
-            decimal priceUpper = V4TickMath.GetPriceAtTick(tickUpper);
+            decimal priceLower = V4TickMath.Current.GetPriceAtTick(tickLower);
+            decimal priceUpper = V4TickMath.Current.GetPriceAtTick(tickUpper);
 
             Assert.True(priceLower > 0, "Price at lower tick should be positive");
             Assert.True(priceUpper > 0, "Price at upper tick should be positive");
@@ -416,7 +416,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.Equal(poolKey.Fee, positionInfo.PoolKey.Fee);
 
             var positionInfoBytes = await positionManager.PositionInfoQueryAsync(tokenId);
-            var decodedInfo = V4PositionInfoDecoder.DecodePositionInfo(positionInfoBytes);
+            var decodedInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(positionInfoBytes);
             Assert.Equal(tickLower, decodedInfo.TickLower);
             Assert.Equal(tickUpper, decodedInfo.TickUpper);
 
@@ -996,7 +996,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(newLiquidity > 0, "New position should have liquidity");
 
             var newPositionInfoBytes = await positionManager.PositionInfoQueryAsync(newTokenId);
-            var newPositionInfo = V4PositionInfoDecoder.DecodePositionInfo(newPositionInfoBytes);
+            var newPositionInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(newPositionInfoBytes);
             Assert.Equal(-1200, newPositionInfo.TickLower);
             Assert.Equal(1200, newPositionInfo.TickUpper);
         }
@@ -1295,3 +1295,5 @@ namespace Nethereum.Uniswap.Testing
         #endregion
     }
 }
+
+

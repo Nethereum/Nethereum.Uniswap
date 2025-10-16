@@ -69,7 +69,7 @@ namespace Nethereum.Uniswap.V4.PositionManager
             var poolKey = poolAndPositionInfo.PoolKey;
             var packedInfo = poolAndPositionInfo.Info;
 
-            var decodedInfo = V4PositionInfoDecoder.DecodePositionInfo(packedInfo);
+            var decodedInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(packedInfo);
 
             var liquidity = await GetPositionLiquidityQueryAsync(tokenId);
 
@@ -98,14 +98,14 @@ namespace Nethereum.Uniswap.V4.PositionManager
 
             var positionInfo = await stateView.GetPositionInfoQueryAsync(poolId, positionId);
 
-            var unclaimedFees = V4FeeCalculator.CalculateUnclaimedFees(
+            var unclaimedFees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 positionInfo.FeeGrowthInside0LastX128,
                 positionInfo.FeeGrowthInside1LastX128,
                 feeGrowthInside.FeeGrowthInside0X128,
                 feeGrowthInside.FeeGrowthInside1X128);
 
-            var isInRange = V4PositionInfoHelper.IsPositionInRange(currentTick, decodedInfo.TickLower, decodedInfo.TickUpper);
+            var isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, decodedInfo.TickLower, decodedInfo.TickUpper);
 
             return new V4UserPosition
             {
@@ -176,6 +176,9 @@ namespace Nethereum.Uniswap.V4.PositionManager
     }
 
 }
+
+
+
 
 
 

@@ -20,13 +20,14 @@ namespace Nethereum.Uniswap.V4
         public string Message { get; set; }
     }
 
-    public static class V4SlippageCalculator
+    public  class V4SlippageCalculator
     {
-        private static readonly BigDecimal Zero = new BigDecimal(BigInteger.Zero, 0);
-        private static readonly BigDecimal One = new BigDecimal(BigInteger.One, 0);
-        private static readonly BigDecimal Hundred = new BigDecimal(new BigInteger(100), 0);
+        public static readonly V4SlippageCalculator Current = new V4SlippageCalculator();
+        private  readonly BigDecimal Zero = new BigDecimal(BigInteger.Zero, 0);
+        private  readonly BigDecimal One = new BigDecimal(BigInteger.One, 0);
+        private  readonly BigDecimal Hundred = new BigDecimal(new BigInteger(100), 0);
 
-        public static SlippageResult CalculateMinimumAmountOut(BigInteger amountOut, BigDecimal slippageTolerancePercentage)
+        public  SlippageResult CalculateMinimumAmountOut(BigInteger amountOut, BigDecimal slippageTolerancePercentage)
         {
             ValidatePositiveAmount(amountOut, nameof(amountOut));
             ValidateTolerance(slippageTolerancePercentage);
@@ -49,7 +50,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static SlippageResult CalculateMaximumAmountIn(BigInteger amountIn, BigDecimal slippageTolerancePercentage)
+        public  SlippageResult CalculateMaximumAmountIn(BigInteger amountIn, BigDecimal slippageTolerancePercentage)
         {
             ValidatePositiveAmount(amountIn, nameof(amountIn));
             ValidateTolerance(slippageTolerancePercentage);
@@ -72,7 +73,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static BigDecimal CalculateSlippagePercentage(BigInteger expectedAmount, BigInteger actualAmount)
+        public  BigDecimal CalculateSlippagePercentage(BigInteger expectedAmount, BigInteger actualAmount)
         {
             if (expectedAmount <= 0)
             {
@@ -94,7 +95,7 @@ namespace Nethereum.Uniswap.V4
             return ratio * Hundred;
         }
 
-        public static SlippageValidationResult ValidateSlippage(
+        public  SlippageValidationResult ValidateSlippage(
             BigInteger expectedAmount,
             BigInteger actualAmount,
             BigDecimal slippageTolerancePercentage,
@@ -141,7 +142,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        public static (BigInteger minAmount0, BigInteger minAmount1) CalculateMinimumLiquidityAmounts(
+        public  (BigInteger minAmount0, BigInteger minAmount1) CalculateMinimumLiquidityAmounts(
             BigInteger amount0,
             BigInteger amount1,
             BigDecimal slippageTolerancePercentage)
@@ -152,14 +153,14 @@ namespace Nethereum.Uniswap.V4
             return (result0.AmountWithSlippage, result1.AmountWithSlippage);
         }
 
-        public static BigInteger ApplySlippageTolerance(BigInteger amount, BigDecimal slippageTolerancePercentage, bool isMinimum)
+        public  BigInteger ApplySlippageTolerance(BigInteger amount, BigDecimal slippageTolerancePercentage, bool isMinimum)
         {
             return isMinimum
                 ? CalculateMinimumAmountOut(amount, slippageTolerancePercentage).AmountWithSlippage
                 : CalculateMaximumAmountIn(amount, slippageTolerancePercentage).AmountWithSlippage;
         }
 
-        private static void ValidatePositiveAmount(BigInteger amount, string parameterName)
+        private  void ValidatePositiveAmount(BigInteger amount, string parameterName)
         {
             if (amount <= 0)
             {
@@ -167,14 +168,14 @@ namespace Nethereum.Uniswap.V4
             }
         }
 
-        private static void ValidateTolerance(BigDecimal tolerance)
+        private  void ValidateTolerance(BigDecimal tolerance)
         {
             if (tolerance.CompareTo(Zero) < 0 || tolerance.CompareTo(Hundred) > 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(tolerance), "Slippage tolerance must be between 0 and 100");
             }
         }
-        private static BigInteger CeilingToBigInteger(BigDecimal value)
+        private  BigInteger CeilingToBigInteger(BigDecimal value)
         {
             if (value.CompareTo(Zero) >= 0)
             {

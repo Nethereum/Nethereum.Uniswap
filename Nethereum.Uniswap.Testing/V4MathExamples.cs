@@ -525,7 +525,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("100000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("100000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -546,7 +546,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("200000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("200000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -567,7 +567,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("200000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("200000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -588,7 +588,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("100000000000000000000000000000000"); // Smaller (wrapped around)
             var feeGrowthInside1Current = BigInteger.Parse("100000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -610,7 +610,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("340282366920938463463374607431768211456"); // Large growth
             var feeGrowthInside1Current = BigInteger.Parse("340282366920938463463374607431768211456");
 
-            var fees = V4FeeCalculator.CalculateUnclaimedFees(
+            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,

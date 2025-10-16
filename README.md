@@ -127,12 +127,12 @@ var amount1 = amounts.Item2;
 // For exact input swaps (you know input, calculate min output)
 var tolerance = new BigDecimal(0.5m); // 0.5% slippage
 
-var minAmountOut = V4SlippageCalculator.CalculateMinimumAmountOut(
+var minAmountOut = V4SlippageCalculator.Current.CalculateMinimumAmountOut(
     expectedAmountOut,
     tolerance);
 
 // For exact output swaps (you know output, calculate max input)
-var maxAmountIn = V4SlippageCalculator.CalculateMaximumAmountIn(
+var maxAmountIn = V4SlippageCalculator.Current.CalculateMaximumAmountIn(
     expectedAmountIn,
     tolerance);
 ```
@@ -839,4 +839,5 @@ To enable hardhat.
     }
 
 ```
+
 

@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace Nethereum.Uniswap.V4
 {
@@ -8,11 +8,12 @@ namespace Nethereum.Uniswap.V4
         public BigInteger Fees1 { get; set; }
     }
 
-    public static class V4FeeCalculator
+    public class V4FeeCalculator
     {
+        public static V4FeeCalculator Current { get; } = new V4FeeCalculator();
         private static readonly BigInteger Q128 = BigInteger.One << 128;
 
-        public static UnclaimedFees CalculateUnclaimedFees(
+        public UnclaimedFees CalculateUnclaimedFees(
             BigInteger liquidity,
             BigInteger feeGrowthInside0LastX128,
             BigInteger feeGrowthInside1LastX128,
@@ -29,7 +30,7 @@ namespace Nethereum.Uniswap.V4
             };
         }
 
-        private static BigInteger CalculateFees(
+        private BigInteger CalculateFees(
             BigInteger liquidity,
             BigInteger feeGrowthLastX128,
             BigInteger feeGrowthCurrentX128)
@@ -54,3 +55,5 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
+

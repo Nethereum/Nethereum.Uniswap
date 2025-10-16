@@ -45,7 +45,7 @@ namespace Nethereum.Uniswap.V4
             var liquidity = await positionManager.GetPositionLiquidityQueryAsync(tokenId);
             var positionInfo = await positionManager.GetPoolAndPositionInfoQueryAsync(tokenId);
             var positionInfoBytes = await positionManager.PositionInfoQueryAsync(tokenId);
-            var decodedInfo = V4PositionInfoDecoder.DecodePositionInfo(positionInfoBytes);
+            var decodedInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(positionInfoBytes);
 
             var poolKeyBytes = positionInfo.PoolKey.EncodePoolKey();
             var poolId = Nethereum.Util.Sha3Keccack.Current.CalculateHash(poolKeyBytes);
@@ -99,5 +99,6 @@ namespace Nethereum.Uniswap.V4
         }
     }
 }
+
 
 
