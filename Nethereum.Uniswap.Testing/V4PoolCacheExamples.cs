@@ -51,18 +51,6 @@ namespace Nethereum.Uniswap.Testing
             Assert.Equal(pool1.LastUpdated, pool2.LastUpdated);
         }
 
-        [Fact]
-        public async Task TestPoolCacheFindPoolsForPair()
-        {
-            var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
-
-            var eth = AddressUtil.ZERO_ADDRESS;
-            var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-
-            var pools = await poolCache.FindPoolsForPairAsync(eth, usdc, new int[] { 500, 3000 }, new int[] { 10, 60 });
-            Assert.NotNull(pools);
-        }
 
         [Fact]
         public async Task TestPoolCacheExpiration()

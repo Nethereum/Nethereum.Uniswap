@@ -173,7 +173,7 @@ namespace Nethereum.Uniswap.V4
             {
                 throw new ArgumentOutOfRangeException(nameof(tolerance), "Slippage tolerance must be between 0 and 100");
             }
-        
+        }
         private static BigInteger CeilingToBigInteger(BigDecimal value)
         {
             if (value.CompareTo(Zero) >= 0)
@@ -187,6 +187,6 @@ namespace Nethereum.Uniswap.V4
             var floorNegated = negated.FloorToBigInteger();
             return -floorNegated;
         }
-}
     }
 }
+

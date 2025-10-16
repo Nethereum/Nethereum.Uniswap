@@ -104,8 +104,14 @@ namespace Nethereum.Uniswap.V4
                 return bestPath;
             }
 
-            feeTiers ??= new int[] { 100, 500, 3000, 10000 };
-            tickSpacings ??= new int[] { 1, 10, 60, 200 };
+            if (feeTiers == null)
+            {
+                feeTiers = new int[] { 100, 500, 3000, 10000 };
+            }
+            if (tickSpacings == null)
+            {
+                tickSpacings = new int[] { 1, 10, 60, 200 };
+            }
 
             foreach (var fee in feeTiers)
             {

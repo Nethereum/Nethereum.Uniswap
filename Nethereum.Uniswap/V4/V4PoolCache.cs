@@ -174,56 +174,17 @@ namespace Nethereum.Uniswap.V4
             return await FetchAndCachePoolAsync(normalizedPoolKey, poolId).ConfigureAwait(false);
         }
 
-        public async Task<List<PoolCacheEntry>> FindPoolsForPairAsync(
-            string currency0,
-            string currency1,
-            int[] fees = null,
-            int[] tickSpacings = null)
+       
+        public static string CalculatePoolId(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
         {
-            if (fees == null)
-            {
-                fees = new[] { 500, 3000, 10000 };
-            }
-            if (tickSpacings == null)
-            {
-                tickSpacings = new[] { 10, 60, 200 };
-            }
-
-            var pools = new List<PoolCacheEntry>();
-
-            foreach (var fee in fees)
-            {
-                foreach (var tickSpacing in tickSpacings)
-                {
-                    var pool = await GetOrFetchPoolAsync(currency0, currency1, fee, tickSpacing).ConfigureAwait(false);
-                    if (pool.Exists && !pools.Any(p => p.PoolId.Equals(pool.PoolId, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        pools.Add(pool);
-                    }
-                }
-            }
-
-            return pools;
+            return CalculatePoolIdBytes(poolKey).ToHex(false);
         }
 
-        // TODO: Audit remaining pool-id helpers to ensure ToHex usage is consistent.
-        private string CalculatePoolId(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
+        public static byte[] CalculatePoolIdBytes(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
         {
             var normalized = V4PoolKeyHelper.Normalize(poolKey);
             var encoded = normalized.EncodePoolKey();
-            var hash = Sha3Keccack.Current.CalculateHash(encoded);
-            return hash.ToHex(false);
-        }
-
-        private byte[] CalculatePoolIdBytes(Nethereum.Uniswap.V4.PositionManager.ContractDefinition.PoolKey poolKey)
-        {
-            var normalized = V4PoolKeyHelper.Normalize(poolKey);
-            var encoded = normalized.EncodePoolKey();
-            var hash = Sha3Keccack.Current.CalculateHash(encoded);
-
-            var poolId = new byte[32];
-            Array.Copy(hash, 0, poolId, 0, 32);
-            return poolId;
+            return Sha3Keccack.Current.CalculateHash(encoded);
         }
 
         public async Task<List<PoolCacheEntry>> FindPoolsForTokenAsync(

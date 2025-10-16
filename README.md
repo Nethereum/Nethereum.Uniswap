@@ -1,8 +1,6 @@
 # Nethereum.Uniswap V2, V3, V4, Universal Router and Permit 2
 
-Uniswap V2, V3, V4, Universal Router and Permit 2 starter project / example integration with Nethereum.
-
-This is a reference example, test accordingly.
+Uniswap V2, V3, V4, Universal Router and Permit 2 integration with Nethereum.
 
 ---
 
