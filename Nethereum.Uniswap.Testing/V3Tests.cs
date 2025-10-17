@@ -51,7 +51,7 @@ namespace Nethereum.Uniswap.Testing
             //************ QUOTING ************
 
 
-            //**** Slot 0 Price Calculator ****
+            //**** Slot 0 PriceCalculator Calculator ****
             var calculator = new UniswapV3Slot0PriceCalculator(web3, factoryAddress);
             //FEES (1% == 10000, 0.3% == 3000, 0.05% == 500, 0.01 == 100)
             var priceWethuni = await calculator.GetPoolPricesAsync(uni, weth, 500);

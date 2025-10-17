@@ -26,15 +26,15 @@ namespace Nethereum.Uniswap.V4.Positions
 
             Manager = new PositionManagerService(web3, addresses.PositionManager);
             StateView = new StateViewService(web3, addresses.StateView);
-            ValueCalculator = new PositionValueCalculator(web3, addresses.PositionManager, addresses.StateView);
+            PositionValueCalculator = new PositionValueCalculator(web3, addresses.PositionManager, addresses.StateView);
         }
 
         public PositionManagerService Manager { get; }
         public StateViewService StateView { get; }
-        public PositionValueCalculator ValueCalculator { get; }
+        public PositionValueCalculator PositionValueCalculator { get; }
 
-        public LiquidityCalculator Liquidity => LiquidityCalculator.Current;
-        public PositionInfoUtils PositionInfo => PositionInfoUtils.Current;
+        public LiquidityCalculator LiquidityCalculator => LiquidityCalculator.Current;
+        public PositionInfoUtils PositionInfoUtils => PositionInfoUtils.Current;
         public PositionInfoDecoder PositionInfoDecoder => PositionInfoDecoder.Current;
 
         public PositionManagerActionsBuilder CreatePositionManagerActionsBuilder() => new PositionManagerActionsBuilder();

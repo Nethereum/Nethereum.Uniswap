@@ -7,7 +7,7 @@ namespace Nethereum.Uniswap.V4
     {
         /// <summary>
         /// Common fee tiers used in Uniswap V4 pools.
-        /// Fee values represent basis points (1/100th of a percent):
+        /// FeeCalculator values represent basis points (1/100th of a percent):
         /// - 100 = 0.01% (1 basis point)
         /// - 500 = 0.05% (5 basis points)
         /// - 3000 = 0.30% (30 basis points)

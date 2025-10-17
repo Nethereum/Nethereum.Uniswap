@@ -14,7 +14,14 @@ var url = "https://base-sepolia.drpc.org";
 var privateKey = "0xYOUR_PRIVATE_KEY";
 var web3 = new Web3.Web3(new Account(privateKey), url);
 
-var poolManager = new PoolManagerService(web3, UniswapAddresses.BaseSepoliaPoolManagerV4);
+// Access Uniswap V4 services - defaults to Mainnet
+var uniswap = web3.UniswapV4();
+
+// Or specify a different network
+var uniswap = web3.UniswapV4(UniswapV4Addresses.BaseSepolia);
+
+// Access pool manager through service hierarchy
+var poolManager = uniswap.Pools.Manager;
 var usdc = "0x91D1e0b9f6975655A381c79fd6f1D118D1c5b958";
 
 var pool = new PoolKey()
@@ -30,8 +37,11 @@ var pool = new PoolKey()
 ## Quoting Prices
 
 ```csharp
-var stateViewService = new StateViewService(web3, UniswapAddresses.BaseSepoliaStateViewV4);
-var v4Quoter = new V4QuoterService(web3, UniswapAddresses.BaseSepoliaQuoterV4);
+var uniswap = web3.UniswapV4(UniswapV4Addresses.BaseSepolia);
+
+// Access StateView and Quoter through service hierarchy
+var stateViewService = uniswap.Positions.StateView;
+var v4Quoter = uniswap.Pricing.Quoter;
 
 var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey> { pool }, AddressUtil.ZERO_ADDRESS);
 var amountIn = Web3.Web3.Convert.ToWei(0.001);
@@ -50,8 +60,9 @@ var quoteAmount = Web3.Web3.Convert.FromWei(quote.AmountOut, 6); // USDC has 6 d
 ## Executing Swaps with Universal Router
 
 ```csharp
-var universalRouter = new UniversalRouterService(web3, UniswapAddresses.MainnetUniversalRouter);
-var v4ActionBuilder = new UniversalRouterV4ActionsBuilder();
+var uniswap = web3.UniswapV4();
+var universalRouter = uniswap.UniversalRouter;
+var v4ActionBuilder = uniswap.GetUniversalRouterV4ActionsBuilder();
 
 // Add swap action
 var swapExactIn = new SwapExactIn()
@@ -90,7 +101,8 @@ var receipt = await universalRouter.ExecuteRequestAndWaitForReceiptAsync(execute
 
 ### Calculate Pool Prices from SqrtPriceX96
 ```csharp
-var prices = V4PriceCalculator.CalculatePricesFromSqrtPriceX96(
+var uniswap = web3.UniswapV4();
+var prices = uniswap.Pricing.PriceCalculator.CalculatePricesFromSqrtPriceX96(
     sqrtPriceX96,
     token0Decimals: 18,
     token1Decimals: 6);
@@ -101,16 +113,19 @@ var priceToken1InToken0 = prices.Item2; // Price of token1 in terms of token0
 
 ### Tick Math - Convert Between Ticks and Prices
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // Get sqrt price from tick
-var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(tick);
+var sqrtPriceX96 = uniswap.Math.Tick.GetSqrtRatioAtTick(tick);
 
 // Get tick from sqrt price
-var tick = V4TickMath.Current.GetTickAtSqrtRatio(sqrtPriceX96);
+var tick = uniswap.Math.Tick.GetTickAtSqrtRatio(sqrtPriceX96);
 ```
 
 ### Liquidity Math - Calculate Token Amounts
 ```csharp
-var amounts = V4LiquidityMath.GetAmountsForLiquidityByTicks(
+var uniswap = web3.UniswapV4();
+var amounts = uniswap.Positions.LiquidityCalculator.GetAmountsForLiquidityByTicks(
     sqrtPriceX96,
     tickLower,
     tickUpper,
@@ -124,22 +139,25 @@ var amount1 = amounts.Item2;
 
 ### Calculate Slippage-Protected Amounts
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // For exact input swaps (you know input, calculate min output)
 var tolerance = new BigDecimal(0.5m); // 0.5% slippage
 
-var minAmountOut = V4SlippageCalculator.Current.CalculateMinimumAmountOut(
+var minAmountOut = uniswap.Pricing.SlippageCalculator.CalculateMinimumAmountOut(
     expectedAmountOut,
     tolerance);
 
 // For exact output swaps (you know output, calculate max input)
-var maxAmountIn = V4SlippageCalculator.Current.CalculateMaximumAmountIn(
+var maxAmountIn = uniswap.Pricing.SlippageCalculator.CalculateMaximumAmountIn(
     expectedAmountIn,
     tolerance);
 ```
 
 ### Calculate and Monitor Price Impact
 ```csharp
-var calculator = new V4PriceImpactCalculator();
+var uniswap = web3.UniswapV4();
+var calculator = uniswap.Pricing.PriceImpactCalculator;
 
 // Calculate price impact percentage
 var priceImpact = calculator.CalculatePriceImpact(
@@ -155,49 +173,12 @@ var impactLevel = calculator.ClassifyPriceImpact(priceImpact);
 var warning = calculator.GetPriceImpactWarning(impactLevel);
 ```
 
-## Token Price Discovery
-
-### Get Token Price in Stablecoins
-```csharp
-// Get price in specific stablecoin
-var price = await V4PriceService.GetPriceInStablecoinAsync(
-    web3,
-    quoterAddress,
-    tokenAddress,
-    stablecoinAddress,
-    tokenDecimals: 18,
-    stablecoinDecimals: 6,
-    fee: 3000,
-    tickSpacing: 60);
-
-// Get best price across all fee tiers
-var bestPrice = await V4PriceService.GetBestPriceInStablecoinAsync(
-    web3,
-    quoterAddress,
-    tokenAddress,
-    stablecoinAddress,
-    tokenDecimals: 18,
-    stablecoinDecimals: 6,
-    tickSpacing: 60);
-
-// Get prices in all stablecoins (USDC, USDT, DAI)
-var prices = await V4PriceService.GetPricesInAllStablecoinsAsync(
-    web3,
-    quoterAddress,
-    tokenAddress,
-    tokenDecimals: 18,
-    tickSpacing: 60);
-```
-
 ## Pool Discovery and Caching
 
-### Initialize Pool Cache
+### Access Pool Cache Service
 ```csharp
-var poolCache = new V4PoolCache(
-    web3,
-    stateViewAddress: UniswapAddresses.MainnetStateViewV4,
-    poolManagerAddress: UniswapAddresses.MainnetPoolManagerV4,
-    cacheExpiration: TimeSpan.FromHours(24));
+var uniswap = web3.UniswapV4();
+var poolCache = uniswap.Pools.Cache;
 ```
 
 ### Fetch and Cache Pool Data
@@ -218,11 +199,13 @@ var exists = pool.Exists;
 
 ### Event-Based Pool Discovery
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // Find all pools containing a specific token using Initialize events
 var latestBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
 var startBlock = latestBlock.Value - 100_000; // look back ~100k blocks
 
-var pools = await poolCache.FindPoolsForTokenAsync(
+var pools = await uniswap.Pools.Cache.FindPoolsForTokenAsync(
     token: usdc,
     fromBlockNumber: startBlock,
     toBlockNumber: latestBlock.Value);
@@ -236,21 +219,24 @@ foreach (var pool in pools)
 
 ### Manage Cache
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // Refresh specific pool
-var updatedPool = await poolCache.RefreshPoolAsync(poolId);
+var updatedPool = await uniswap.Pools.Cache.RefreshPoolAsync(poolId);
 
 // Get all cached pools
-var allPools = await poolCache.GetAllCachedPoolsAsync();
+var allPools = await uniswap.Pools.Cache.GetAllCachedPoolsAsync();
 
 // Clear cache
-await poolCache.ClearCacheAsync();
+await uniswap.Pools.Cache.ClearCacheAsync();
 ```
 
 ## Position Management
 
 ### Creating a New Position
 ```csharp
-var positionManager = new PositionManagerService(web3, UniswapAddresses.MainnetPositionManagerV4);
+var uniswap = web3.UniswapV4();
+var positionManager = uniswap.Positions.Manager;
 
 var poolKey = new PoolKey()
 {
@@ -261,7 +247,7 @@ var poolKey = new PoolKey()
     Hooks = AddressUtil.ZERO_ADDRESS
 };
 
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 actionsBuilder.AddCommand(new MintPosition()
 {
@@ -299,8 +285,9 @@ Console.WriteLine($"Pool: {positionInfo.PoolKey.Currency0}/{positionInfo.PoolKey
 Console.WriteLine($"Fee: {positionInfo.PoolKey.Fee}");
 
 // Decode position details
+var uniswap = web3.UniswapV4();
 var positionInfoBytes = await positionManager.PositionInfoQueryAsync(tokenId);
-var decodedInfo = V4PositionInfoDecoder.DecodePositionInfo(positionInfoBytes);
+var decodedInfo = uniswap.Positions.PositionInfoDecoder.DecodePositionInfo(positionInfoBytes);
 Console.WriteLine($"Range: {decodedInfo.TickLower} to {decodedInfo.TickUpper}");
 
 // Get position owner
@@ -309,7 +296,8 @@ var owner = await positionManager.OwnerOfQueryAsync(tokenId);
 
 ### Increasing Liquidity
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 actionsBuilder.AddCommand(new IncreaseLiquidity()
 {
@@ -333,7 +321,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Decreasing Liquidity
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 actionsBuilder.AddCommand(new DecreaseLiquidity()
 {
@@ -356,7 +345,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Atomic Position Rebalancing
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 // Close old position
 actionsBuilder.AddCommand(new DecreaseLiquidity()
@@ -395,7 +385,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Burning a Position
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 actionsBuilder.AddCommand(new DecreaseLiquidity()
 {
@@ -426,7 +417,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Collecting Fees
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 // DecreaseLiquidity with liquidity=0 collects fees without removing liquidity
 actionsBuilder.AddCommand(new DecreaseLiquidity()
@@ -450,7 +442,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Batch Fee Collection from Multiple Positions
 ```csharp
-var actionsBuilder = new V4PositionManagerActionsBuilder();
+var uniswap = web3.UniswapV4();
+var actionsBuilder = uniswap.Positions.CreatePositionManagerActionsBuilder();
 
 // Collect fees from position 1
 actionsBuilder.AddCommand(new DecreaseLiquidity()
@@ -484,10 +477,8 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
 
 ### Calculating Position Value
 ```csharp
-var valueCalculator = new V4PositionValueCalculator(
-    web3,
-    UniswapAddresses.MainnetPositionManagerV4,
-    UniswapAddresses.MainnetStateViewV4);
+var uniswap = web3.UniswapV4();
+var valueCalculator = uniswap.Positions.PositionValueCalculator;
 
 var positionValue = await valueCalculator.GetPositionValueAsync(
     tokenId,
@@ -504,15 +495,9 @@ Console.WriteLine($"Total value in Token1: {positionValue.ValueInToken1}");
 
 ### Find Best Direct Path
 ```csharp
-var poolCache = new V4PoolCache(
-    web3,
-    UniswapAddresses.MainnetStateViewV4,
-    UniswapAddresses.MainnetPoolManagerV4);
-
-var pathFinder = new V4BestPathFinder(
-    web3,
-    UniswapAddresses.MainnetQuoterV4,
-    poolCache);
+var uniswap = web3.UniswapV4();
+var poolCache = uniswap.Pools.Cache;
+var pathFinder = uniswap.Pricing.QuotePricePathFinder;
 
 var cachedPools = await poolCache.GetAllCachedPoolsAsync();
 
@@ -545,9 +530,10 @@ Console.WriteLine($"Output amount: {Web3.Web3.Convert.FromWei(bestPath.AmountOut
 
 ### Check and Manage Approvals
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // Check if token is approved
-var approvalStatus = await V4TokenApprovalHelper.CheckApprovalAsync(
-    web3,
+var approvalStatus = await uniswap.Accounts.Approvals.CheckApprovalAsync(
     tokenAddress,
     owner,
     spender,
@@ -556,16 +542,14 @@ var approvalStatus = await V4TokenApprovalHelper.CheckApprovalAsync(
 if (!approvalStatus.IsApproved)
 {
     // Approve token
-    var txHash = await V4TokenApprovalHelper.ApproveAsync(
-        web3,
+    var txHash = await uniswap.Accounts.Approvals.ApproveAsync(
         tokenAddress,
         spender,
-        V4TokenApprovalHelper.GetMaxApprovalAmount());
+        AccountApprovalService.GetMaxApprovalAmount());
 }
 
 // Or check and approve in one call
-await V4TokenApprovalHelper.CheckAndApproveIfNeededAsync(
-    web3,
+await uniswap.Accounts.Approvals.CheckAndApproveIfNeededAsync(
     tokenAddress,
     owner,
     spender,
@@ -574,9 +558,10 @@ await V4TokenApprovalHelper.CheckAndApproveIfNeededAsync(
 
 ### Validate Token Balances
 ```csharp
+var uniswap = web3.UniswapV4();
+
 // Check single token balance
-var balanceResult = await V4BalanceValidator.ValidateBalanceAsync(
-    web3,
+var balanceResult = await uniswap.Accounts.Balances.ValidateBalanceAsync(
     tokenAddress,
     owner,
     requiredAmount);
@@ -587,8 +572,7 @@ if (!balanceResult.HasSufficientBalance)
 }
 
 // Validate both tokens for liquidity operations
-var hasBalance = await V4BalanceValidator.ValidateBalancesForLiquidityAsync(
-    web3,
+var hasBalance = await uniswap.Accounts.Balances.ValidateBalancesForLiquidityAsync(
     token0,
     token1,
     owner,

@@ -41,17 +41,17 @@ namespace Nethereum.Uniswap.V4.Pricing
             
 
             Quoter = new V4QuoterService(web3, addresses.Quoter);
-            PathFinder = new QuotePricePathFinder(web3, addresses.Quoter, poolCache);
+            QuotePricePathFinder = new QuotePricePathFinder(web3, addresses.Quoter, poolCache);
             PathKeyMapper = PathKeyMapper.Current;
         }
 
-        public PriceCalculator Price => PriceCalculator.Current;
-        public FeeCalculator Fee => FeeCalculator.Current;
-        public SlippageCalculator Slippage => SlippageCalculator.Current;
-        public PriceImpactCalculator PriceImpact => PriceImpactCalculator.Current;
+        public PriceCalculator PriceCalculator => PriceCalculator.Current;
+        public FeeCalculator FeeCalculator => FeeCalculator.Current;
+        public SlippageCalculator SlippageCalculator => SlippageCalculator.Current;
+        public PriceImpactCalculator PriceImpactCalculator => PriceImpactCalculator.Current;
 
         public V4QuoterService Quoter { get; }
-        public QuotePricePathFinder PathFinder { get; }
+        public QuotePricePathFinder QuotePricePathFinder { get; }
         public PoolKeyMapper PoolKeyMapper { get; }
         public PathKeyMapper PathKeyMapper { get; }
     }

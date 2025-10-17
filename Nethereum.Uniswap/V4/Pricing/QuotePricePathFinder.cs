@@ -23,6 +23,13 @@ namespace Nethereum.Uniswap.V4.Pricing
         public int[] Fees { get; set; }
     }
 
+    // Replaces tuple usage for complete paths in multihop discovery
+    internal class CompleteSwapPath
+    {
+        public List<PoolKey> Pools { get; set; }
+        public List<int> Fees { get; set; }
+    }
+
     public class QuotePricePathFinder
     {
         private readonly IWeb3 _web3;
@@ -340,7 +347,7 @@ namespace Nethereum.Uniswap.V4.Pricing
             var quoter = new V4QuoterService(_web3, _quoterAddress);
 
             // Collect all possible complete paths
-            var completePaths = new List<(List<PoolKey> pools, List<int> fees)>();
+            var completePaths = new List<CompleteSwapPath>();
 
             foreach (var route in routes)
             {
@@ -351,7 +358,7 @@ namespace Nethereum.Uniswap.V4.Pricing
                     if (hopIndex == hopCount)
                     {
                         // Complete path found - add to list
-                        completePaths.Add((new List<PoolKey>(currentPools), new List<int>(currentFees)));
+                        completePaths.Add(new CompleteSwapPath { Pools = new List<PoolKey>(currentPools), Fees = new List<int>(currentFees) });
                         return;
                     }
 
@@ -394,7 +401,7 @@ namespace Nethereum.Uniswap.V4.Pricing
             // Build quote params for all complete paths
             var quoteParamsList = completePaths.Select(path =>
             {
-                var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(path.pools, tokenIn);
+                var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(path.Pools, tokenIn);
                 return new QuoteExactParams
                 {
                     Path = pathKeys,
@@ -418,10 +425,10 @@ namespace Nethereum.Uniswap.V4.Pricing
                     bestAmountOut = result.Output.AmountOut;
                     bestPath = new SwapPathResult
                     {
-                        Path = completePaths[i].pools,
+                        Path = completePaths[i].Pools,
                         AmountOut = result.Output.AmountOut,
                         GasEstimate = result.Output.GasEstimate,
-                        Fees = completePaths[i].fees.ToArray()
+                        Fees = completePaths[i].Fees.ToArray()
                     };
                 }
             }
