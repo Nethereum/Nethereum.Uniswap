@@ -44,9 +44,18 @@ namespace Nethereum.Uniswap.V4.Contracts.PoolManager
             var blockchainLogProcessing = Web3.Processing.Logs;
 
             // Sort tokens so they match currency0/currency1 ordering in v4
-            var (currency0, currency1) = string.CompareOrdinal(tokenA, tokenB) < 0
-                ? (tokenA, tokenB)
-                : (tokenB, tokenA);
+            string currency0;
+            string currency1;
+            if (string.CompareOrdinal(tokenA, tokenB) < 0)
+            {
+                currency0 = tokenA;
+                currency1 = tokenB;
+            }
+            else
+            {
+                currency0 = tokenB;
+                currency1 = tokenA;
+            }
 
             var filterInput = new FilterInputBuilder<InitializeEventDTO>()
                 .AddTopic(x => x.Currency0, currency0)

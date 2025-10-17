@@ -18,7 +18,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public BigInteger GetLiquidityForAmount0(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             BigInteger intermediate = (sqrtRatioAX96 * sqrtRatioBX96) / Q96;
             return (amount0 * intermediate) / (sqrtRatioBX96 - sqrtRatioAX96);
@@ -27,7 +31,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public BigInteger GetLiquidityForAmount1(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount1)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             return (amount1 * Q96) / (sqrtRatioBX96 - sqrtRatioAX96);
         }
@@ -35,7 +43,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public BigInteger GetLiquidityForAmounts(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger amount0, BigInteger amount1)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             if (sqrtRatioX96 <= sqrtRatioAX96)
             {
@@ -56,7 +68,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public BigInteger GetAmount0ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             return (liquidity * Q96 * (sqrtRatioBX96 - sqrtRatioAX96)) / sqrtRatioBX96 / sqrtRatioAX96;
         }
@@ -64,7 +80,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public BigInteger GetAmount1ForLiquidity(BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             return (liquidity * (sqrtRatioBX96 - sqrtRatioAX96)) / Q96;
         }
@@ -72,7 +92,11 @@ namespace Nethereum.Uniswap.V4.Positions
         public LiquidityAmounts GetAmountsForLiquidity(BigInteger sqrtRatioX96, BigInteger sqrtRatioAX96, BigInteger sqrtRatioBX96, BigInteger liquidity)
         {
             if (sqrtRatioAX96 > sqrtRatioBX96)
-                (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+            {
+                var temp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = temp;
+            }
 
             BigInteger amount0 = 0;
             BigInteger amount1 = 0;

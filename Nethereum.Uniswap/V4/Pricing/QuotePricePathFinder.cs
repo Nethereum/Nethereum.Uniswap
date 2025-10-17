@@ -447,7 +447,11 @@ namespace Nethereum.Uniswap.V4.Pricing
                 yield break;
             }
 
+#if NET451
+            var uniqueIntermediates = (intermediateTokens ?? new string[0])
+#else
             var uniqueIntermediates = (intermediateTokens ?? Array.Empty<string>())
+#endif
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(t => !t.Equals(tokenIn, StringComparison.OrdinalIgnoreCase) && !t.Equals(tokenOut, StringComparison.OrdinalIgnoreCase))

@@ -20,7 +20,9 @@ namespace Nethereum.Uniswap.V4.Pools
             var checksumA = _addressUtil.ConvertToChecksumAddress(currencyA);
             var checksumB = _addressUtil.ConvertToChecksumAddress(currencyB);
 
-            var (currency0, currency1) = OrderPair(checksumA, checksumB);
+            string currency0;
+            string currency1;
+            OrderPair(checksumA, checksumB, out currency0, out currency1);
 
             var normalizedHooks = string.IsNullOrEmpty(hooks)
                 ? AddressUtil.ZERO_ADDRESS
@@ -94,7 +96,7 @@ namespace Nethereum.Uniswap.V4.Pools
             return CalculatePoolIdBytes(FromQuoterPoolKey(poolKey));
         }
 
-        private (string currency0, string currency1) OrderPair(string currencyA, string currencyB)
+        private void OrderPair(string currencyA, string currencyB, out string currency0, out string currency1)
         {
             var bytesA = currencyA.HexToByteArray();
             var bytesB = currencyB.HexToByteArray();
@@ -107,14 +109,29 @@ namespace Nethereum.Uniswap.V4.Pools
                     continue;
                 }
 
-                return bytesA[i] > bytesB[i]
-                    ? (currencyB, currencyA)
-                    : (currencyA, currencyB);
+                if (bytesA[i] > bytesB[i])
+                {
+                    currency0 = currencyB;
+                    currency1 = currencyA;
+                }
+                else
+                {
+                    currency0 = currencyA;
+                    currency1 = currencyB;
+                }
+                return;
             }
 
-            return string.CompareOrdinal(currencyA, currencyB) <= 0
-                ? (currencyA, currencyB)
-                : (currencyB, currencyA);
+            if (string.CompareOrdinal(currencyA, currencyB) <= 0)
+            {
+                currency0 = currencyA;
+                currency1 = currencyB;
+            }
+            else
+            {
+                currency0 = currencyB;
+                currency1 = currencyA;
+            }
         }
     }
 }

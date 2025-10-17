@@ -19,7 +19,11 @@ namespace Nethereum.Uniswap.V4.Pools
         public Task SavePoolAsync(PoolCacheEntry entry)
         {
             _cache[entry.PoolId] = entry;
+#if NET451
+            return Task.Delay(0);
+#else
             return Task.CompletedTask;
+#endif
         }
 
         public Task<List<PoolCacheEntry>> GetAllPoolsAsync()
@@ -30,10 +34,18 @@ namespace Nethereum.Uniswap.V4.Pools
         public Task ClearAsync()
         {
             _cache.Clear();
+#if NET451
+            return Task.Delay(0);
+#else
             return Task.CompletedTask;
+#endif
         }
     }
 }
+
+
+
+
 
 
 
