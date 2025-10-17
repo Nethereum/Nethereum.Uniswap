@@ -1,23 +1,20 @@
-﻿using Nethereum.Uniswap.V4.Contracts.PoolManager;
-using Nethereum.Util;
-using System;
+﻿using Nethereum.Util;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
-using PoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
+using PoolKey = Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey;
 using Nethereum.Uniswap.UniversalRouter;
 using Nethereum.Uniswap.V4.Mappers;
 using Xunit;
 using Nethereum.Uniswap.V4.V4Quoter;
-using Nethereum.Uniswap.V4;
 using Nethereum.Uniswap.UniversalRouter.V4Actions;
-using Nethereum.Contracts;
 using Nethereum.XUnitEthereumClients;
 using Nethereum.RPC.Extensions;
 using Nethereum.Hex.HexTypes;
-using Nethereum.Uniswap.V4.PositionManager;
+using Nethereum.Uniswap.V4.Pools;
+using Nethereum.Uniswap.V4.Pricing;
+using Nethereum.Uniswap.V4.Utils;
+using Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition;
 
 namespace Nethereum.Uniswap.Testing
 {
@@ -40,7 +37,7 @@ namespace Nethereum.Uniswap.Testing
             var eth = AddressUtil.ZERO_ADDRESS;
 
             var v4Quoter = new V4QuoterService(web3, UniswapAddresses.MainnetQuoterV4);
-            var poolKey = V4PoolKeyHelper.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
+            var poolKey = PoolKeyUtils.Current.CreateNormalizedForQuoter(eth, usdc, 500, 10);
 
 
             var amountIn = Web3.Web3.Convert.ToWei(1);
@@ -56,13 +53,13 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(quote.AmountOut > 0);
 
             var wethUsdcSqrtPriceX96 = BigInteger.Parse("1987654321098765432109876543210");
-            var priceAfter = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96);
+            var priceAfter = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96);
             Assert.True(priceAfter > 0);
 
-            var priceAfterWithDecimals = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96, 18, 6);
+            var priceAfterWithDecimals = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(wethUsdcSqrtPriceX96, 18, 6);
             Assert.True(priceAfterWithDecimals > 0);
 
-            var poolPrice = V4PriceCalculator.Current.CreatePoolPrice(
+            var poolPrice = PriceCalculator.Current.CreatePoolPrice(
                 new byte[] { },
                 eth,
                 usdc,
@@ -80,7 +77,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var poolKey = new Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey()
+            var poolKey = new Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey()
             {
                 Currency0 = eth,
                 Currency1 = usdc,
@@ -90,7 +87,7 @@ namespace Nethereum.Uniswap.Testing
             };
 
             var amountIn = Web3.Web3.Convert.ToWei(1);
-            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey> { poolKey }, eth);
+            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey> { poolKey }, eth);
 
             var quoteParams = new QuoteExactParams()
             {
@@ -102,8 +99,8 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var priceBefore = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
-            var priceImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(priceBefore, effectivePrice);
+            var effectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var priceImpact = PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(priceBefore, effectivePrice);
 
             Assert.True(quote.AmountOut > 0);
             Assert.True(effectivePrice > 0);
@@ -119,7 +116,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var poolKey = new Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey()
+            var poolKey = new Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey()
             {
                 Currency0 = eth,
                 Currency1 = usdc,
@@ -129,7 +126,7 @@ namespace Nethereum.Uniswap.Testing
             };
 
             var amountIn = Web3.Web3.Convert.ToWei(0.1);
-            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey> { poolKey }, eth);
+            var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(new List<PoolKey> { poolKey }, eth);
 
             var quoteParams = new QuoteExactParams()
             {
@@ -142,9 +139,9 @@ namespace Nethereum.Uniswap.Testing
 
             var slippageTolerance = new BigDecimal(1.0m);
             var priceBefore = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
 
-            var quoteWithImpact = V4PriceImpactCalculator.Current.CreateQuoteWithImpact(
+            var quoteWithImpact = PriceImpactCalculator.Current.CreateQuoteWithImpact(
                 amountIn,
                 quote.AmountOut,
                 slippageTolerance,
@@ -170,7 +167,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var poolKey = new Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey()
+            var poolKey = new Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey()
             {
                 Currency0 = eth,
                 Currency1 = usdc,
@@ -185,7 +182,7 @@ namespace Nethereum.Uniswap.Testing
             var amountIn = Web3.Web3.Convert.ToWei(1);
 
             var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
-                new List<Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey> { poolKey }, eth);
+                new List<PoolKey> { poolKey }, eth);
 
             var quoteParams = new QuoteExactParams()
             {
@@ -197,13 +194,13 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var spotPrice = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(amountIn, quote.AmountOut, 18, 6);
 
-            var priceImpactResult = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
+            var priceImpactResult = PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
 
             var slippageTolerance = new BigDecimal(1.0m);
 
-            var quoteWithProtection = V4PriceImpactCalculator.Current.CreateQuoteWithImpact(
+            var quoteWithProtection = PriceImpactCalculator.Current.CreateQuoteWithImpact(
                 amountIn,
                 quote.AmountOut,
                 slippageTolerance,
@@ -256,7 +253,7 @@ namespace Nethereum.Uniswap.Testing
 
             Assert.True(actualAmountOut >= quoteWithProtection.MinimumAmountOut);
 
-            var actualSlippage = V4SlippageCalculator.Current.CalculateSlippagePercentage(quote.AmountOut, actualAmountOut);
+            var actualSlippage = SlippageCalculator.Current.CalculateSlippagePercentage(quote.AmountOut, actualAmountOut);
             Assert.True(actualSlippage <= slippageTolerance * new BigDecimal(1.1m));
         }
 
@@ -272,7 +269,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var poolKey = new Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey()
+            var poolKey = new Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey()
             {
                 Currency0 = eth,
                 Currency1 = usdc,
@@ -286,7 +283,7 @@ namespace Nethereum.Uniswap.Testing
             var largeAmountIn = Web3.Web3.Convert.ToWei(100);
 
             var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
-                new List<Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey> { poolKey }, eth);
+                new List<PoolKey> { poolKey }, eth);
 
             var quoteParams = new QuoteExactParams()
             {
@@ -298,11 +295,11 @@ namespace Nethereum.Uniswap.Testing
             var quote = await v4Quoter.QuoteExactInputQueryAsync(quoteParams);
 
             var spotPrice = 3000m;
-            var effectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, quote.AmountOut, 18, 6);
+            var effectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, quote.AmountOut, 18, 6);
 
-            var priceImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
+            var priceImpact = PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, effectivePrice);
 
-            var impactLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(priceImpact);
+            var impactLevel = PriceImpactCalculator.Current.GetPriceImpactLevel(priceImpact);
 
             Assert.True(quote.AmountOut > 0);
             Assert.True(priceImpact > 0);
@@ -317,7 +314,7 @@ namespace Nethereum.Uniswap.Testing
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
             var eth = AddressUtil.ZERO_ADDRESS;
 
-            var poolKey = new Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey()
+            var poolKey = new Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey()
             {
                 Currency0 = eth,
                 Currency1 = usdc,
@@ -328,7 +325,7 @@ namespace Nethereum.Uniswap.Testing
 
             var v4Quoter = new V4QuoterService(web3, UniswapAddresses.MainnetQuoterV4);
             var pathKeys = V4PathEncoder.EncodeMultihopExactInPath(
-                new List<Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey> { poolKey }, eth);
+                new List<PoolKey> { poolKey }, eth);
 
             var smallAmountIn = Web3.Web3.Convert.ToWei(0.1);
             var largeAmountIn = Web3.Web3.Convert.ToWei(10);
@@ -350,16 +347,16 @@ namespace Nethereum.Uniswap.Testing
             var smallQuote = await v4Quoter.QuoteExactInputQueryAsync(smallQuoteParams);
             var largeQuote = await v4Quoter.QuoteExactInputQueryAsync(largeQuoteParams);
 
-            var smallEffectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(smallAmountIn, smallQuote.AmountOut, 18, 6);
-            var largeEffectivePrice = V4PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, largeQuote.AmountOut, 18, 6);
+            var smallEffectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(smallAmountIn, smallQuote.AmountOut, 18, 6);
+            var largeEffectivePrice = PriceImpactCalculator.Current.CalculateEffectivePrice(largeAmountIn, largeQuote.AmountOut, 18, 6);
 
             var spotPrice = smallEffectivePrice;
 
-            var smallImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, smallEffectivePrice);
-            var largeImpact = V4PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, largeEffectivePrice);
+            var smallImpact = PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, smallEffectivePrice);
+            var largeImpact = PriceImpactCalculator.Current.CalculatePriceImpactFromEffectivePrices(spotPrice, largeEffectivePrice);
 
-            var smallLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(smallImpact);
-            var largeLevel = V4PriceImpactCalculator.Current.GetPriceImpactLevel(largeImpact);
+            var smallLevel = PriceImpactCalculator.Current.GetPriceImpactLevel(smallImpact);
+            var largeLevel = PriceImpactCalculator.Current.GetPriceImpactLevel(largeImpact);
 
             Assert.True(smallQuote.AmountOut > 0);
             Assert.True(largeQuote.AmountOut > 0);

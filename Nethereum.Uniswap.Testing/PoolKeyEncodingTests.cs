@@ -1,6 +1,7 @@
 using Nethereum.ABI;
-using Nethereum.Uniswap.V4;
-using Nethereum.Uniswap.V4.PositionManager.ContractDefinition;
+using Nethereum.Uniswap.V4.Pools;
+
+using Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition;
 using Nethereum.Util;
 using Xunit;
 

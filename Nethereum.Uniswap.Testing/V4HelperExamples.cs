@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
-using PoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
+using PoolKey = Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey;
 using Nethereum.Uniswap.UniversalRouter;
 using Nethereum.Uniswap.V4.Mappers;
 using Xunit;
@@ -19,6 +18,7 @@ using Nethereum.RPC.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Uniswap.V4.PositionManager;
 using Nethereum.RPC.Eth.DTOs;
+using Nethereum.Uniswap.Accounts;
 
 namespace Nethereum.Uniswap.Testing
 {

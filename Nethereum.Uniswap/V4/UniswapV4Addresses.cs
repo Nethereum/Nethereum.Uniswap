@@ -11,6 +11,8 @@
         public string StateView { get; set; }
         public string PositionDescriptor { get; set; }
 
+        public string UniversalRouterV4 { get; set; }
+
         /// <summary>
         /// Ethereum Mainnet addresses
         /// </summary>
@@ -20,7 +22,8 @@
             PositionManager = UniswapAddresses.MainnetPositionManagerV4,
             Quoter = UniswapAddresses.MainnetQuoterV4,
             StateView = UniswapAddresses.MainnetStateViewV4,
-            PositionDescriptor = UniswapAddresses.MainnetPositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.MainnetPositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.MainnetUniversalRouter
         };
 
         /// <summary>
@@ -32,7 +35,9 @@
             PositionManager = UniswapAddresses.BasePositionManagerV4,
             Quoter = UniswapAddresses.BaseQuoterV4,
             StateView = UniswapAddresses.BaseStateViewV4,
-            PositionDescriptor = UniswapAddresses.BasePositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.BasePositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.BaseUniversalRouter
+
         };
 
         /// <summary>
@@ -44,7 +49,8 @@
             PositionManager = UniswapAddresses.OptimismPositionManagerV4,
             Quoter = UniswapAddresses.OptimismQuoterV4,
             StateView = UniswapAddresses.OptimismStateViewV4,
-            PositionDescriptor = UniswapAddresses.OptimismPositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.OptimismPositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.OptimismUniversalRouter
         };
 
         /// <summary>
@@ -56,7 +62,8 @@
             PositionManager = UniswapAddresses.ArbitrumOnePositionManagerV4,
             Quoter = UniswapAddresses.ArbitrumOneQuoterV4,
             StateView = UniswapAddresses.ArbitrumOneStateViewV4,
-            PositionDescriptor = UniswapAddresses.ArbitrumOnePositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.ArbitrumOnePositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.ArbitrumOneUniversalRouter
         };
 
         /// <summary>
@@ -68,7 +75,8 @@
             PositionManager = UniswapAddresses.PolygonPositionManagerV4,
             Quoter = UniswapAddresses.PolygonQuoterV4,
             StateView = UniswapAddresses.PolygonStateViewV4,
-            PositionDescriptor = UniswapAddresses.PolygonPositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.PolygonPositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.PolygonUniversalRouter
         };
 
         /// <summary>
@@ -80,7 +88,8 @@
             PositionManager = UniswapAddresses.AvalanchePositionManagerV4,
             Quoter = UniswapAddresses.AvalancheQuoterV4,
             StateView = UniswapAddresses.AvalancheStateViewV4,
-            PositionDescriptor = UniswapAddresses.AvalanchePositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.AvalanchePositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.AvalancheUniversalRouter
         };
 
         /// <summary>
@@ -92,7 +101,8 @@
             PositionManager = UniswapAddresses.BNBPositionManagerV4,
             Quoter = UniswapAddresses.BNBQuoterV4,
             StateView = UniswapAddresses.BNBStateViewV4,
-            PositionDescriptor = UniswapAddresses.BNBPositionDescriptorV4
+            PositionDescriptor = UniswapAddresses.BNBPositionDescriptorV4,
+            UniversalRouterV4 = UniswapAddresses.BNBUniversalRouter
         };
 
         /// <summary>
@@ -104,7 +114,9 @@
             PositionManager = UniswapAddresses.SepoliaPositionManagerV4,
             Quoter = UniswapAddresses.SepoliaQuoterV4,
             StateView = UniswapAddresses.SepoliaStateViewV4,
-            PositionDescriptor = null
+            PositionDescriptor = null,
+            UniversalRouterV4 = UniswapAddresses.SepoliaUniversalRouterV4
+
         };
 
         /// <summary>
@@ -116,7 +128,8 @@
             PositionManager = UniswapAddresses.BaseSepoliaPositionManagerV4,
             Quoter = UniswapAddresses.BaseSepoliaQuoterV4,
             StateView = UniswapAddresses.BaseSepoliaStateViewV4,
-            PositionDescriptor = null
+            PositionDescriptor = null,
+            UniversalRouterV4 = UniswapAddresses.BaseSepoliaUniversalRouterV4
         };
 
         /// <summary>
@@ -128,7 +141,8 @@
             PositionManager = UniswapAddresses.ArbitrumSepoliaPositionManagerV4,
             Quoter = UniswapAddresses.ArbitrumSepoliaQuoterV4,
             StateView = UniswapAddresses.ArbitrumSepoliaStateViewV4,
-            PositionDescriptor = null
+            PositionDescriptor = null,
+            UniversalRouterV4 = UniswapAddresses.ArbitrumSepoliaUniversalRouterV4
         };
 
         /// <summary>
@@ -140,7 +154,8 @@
             PositionManager = UniswapAddresses.UnichainSepoliaPositionManagerV4,
             Quoter = UniswapAddresses.UnichainSepoliaQuoterV4,
             StateView = UniswapAddresses.UnichainSepoliaStateViewV4,
-            PositionDescriptor = null
+            PositionDescriptor = null,
+            UniversalRouterV4 = UniswapAddresses.UnichainSepoliaUniversalRouterV4  
         };
     }
 }

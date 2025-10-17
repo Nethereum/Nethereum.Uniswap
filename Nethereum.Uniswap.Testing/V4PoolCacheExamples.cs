@@ -7,19 +7,18 @@ using System.Numerics;
 using System.Net.Http;
 using Nethereum.JsonRpc.Client;
 using System.Threading.Tasks;
-using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
-using PoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
+using PoolKey = Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition.PoolKey;
 using Nethereum.Uniswap.UniversalRouter;
 using Nethereum.Uniswap.V4.Mappers;
 using Xunit;
 using Nethereum.Uniswap.V4.V4Quoter;
-using Nethereum.Uniswap.V4;
 using Nethereum.Uniswap.UniversalRouter.V4Actions;
 using Nethereum.Contracts;
 using Nethereum.XUnitEthereumClients;
 using Nethereum.RPC.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Uniswap.V4.PositionManager;
+using Nethereum.Uniswap.V4.Pools;
 
 namespace Nethereum.Uniswap.Testing
 {
@@ -37,7 +36,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheGetOrFetch()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
+            var poolCache = new PoolCacheService(web3, UniswapAddresses.MainnetStateViewV4);
 
             var eth = AddressUtil.ZERO_ADDRESS;
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -56,7 +55,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheExpiration()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(
+            var poolCache = new PoolCacheService(
                 web3,
                 UniswapAddresses.MainnetStateViewV4,
                 cacheExpiration: TimeSpan.FromSeconds(1));
@@ -77,7 +76,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheRefresh()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
+            var poolCache = new PoolCacheService(web3, UniswapAddresses.MainnetStateViewV4);
 
             var eth = AddressUtil.ZERO_ADDRESS;
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -96,7 +95,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheClearAndGetAll()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
+            var poolCache = new PoolCacheService(web3, UniswapAddresses.MainnetStateViewV4);
 
             var eth = AddressUtil.ZERO_ADDRESS;
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -117,7 +116,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestFindPoolsForTokenUsingCache()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(
+            var poolCache = new PoolCacheService(
                 web3,
                 UniswapAddresses.MainnetStateViewV4,
                 UniswapAddresses.MainnetPoolManagerV4);
@@ -153,7 +152,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheHandlesUnorderedTokens()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
+            var poolCache = new PoolCacheService(web3, UniswapAddresses.MainnetStateViewV4);
 
             var eth = AddressUtil.ZERO_ADDRESS;
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -172,7 +171,7 @@ namespace Nethereum.Uniswap.Testing
         public async Task TestPoolCacheReturnsMissingPoolAsNonExisting()
         {
             var web3 = _ethereumClientIntegrationFixture.GetWeb3();
-            var poolCache = new V4PoolCache(web3, UniswapAddresses.MainnetStateViewV4);
+            var poolCache = new PoolCacheService(web3, UniswapAddresses.MainnetStateViewV4);
 
             var eth = AddressUtil.ZERO_ADDRESS;
             var usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -188,7 +187,7 @@ namespace Nethereum.Uniswap.Testing
         {
             var failingWeb3 = new Web3.Web3(new RpcClient(new Uri("http://127.0.0.1:0")));
             var repository = new TrackingPoolCacheRepository();
-            var poolCache = new V4PoolCache(
+            var poolCache = new PoolCacheService(
                 failingWeb3,
                 UniswapAddresses.MainnetStateViewV4,
                 repository: repository,
@@ -206,7 +205,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.Empty(cached);
         }
 
-        private class TrackingPoolCacheRepository : IV4PoolCacheRepository
+        private class TrackingPoolCacheRepository : IPoolCacheRepository
         {
             private readonly System.Collections.Concurrent.ConcurrentDictionary<string, PoolCacheEntry> _entries = new System.Collections.Concurrent.ConcurrentDictionary<string, PoolCacheEntry>(StringComparer.OrdinalIgnoreCase);
 

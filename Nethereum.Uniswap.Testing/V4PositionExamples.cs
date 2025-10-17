@@ -1,25 +1,20 @@
 ﻿using Nethereum.Contracts;
-using Nethereum.Uniswap.V4;
-using Nethereum.Uniswap.V4.PositionManager.ContractDefinition;
 using Nethereum.Util;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Extensions;
-using Nethereum.Uniswap.V4.Contracts.PoolManager;
-using Nethereum.Uniswap.V4.StateView;
-using Nethereum.Uniswap.V4.PositionManager;
-using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
-using Nethereum.Web3;
 using Nethereum.XUnitEthereumClients;
-using PoolKey = Nethereum.Uniswap.V4.V4Quoter.ContractDefinition.PoolKey;
 using Xunit;
 using Nethereum.Uniswap.UniversalRouter;
 using Nethereum.Uniswap.UniversalRouter.V4Actions;
-using Nethereum.StandardTokenEIP20;
 using System.Linq;
+using Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition;
+using Nethereum.Uniswap.V4.Positions;
+using Nethereum.Uniswap.V4.Pricing;
+using Nethereum.Uniswap.V4.Utils;
+using Nethereum.Uniswap.V4.PositionManager;
 
 namespace Nethereum.Uniswap.Testing
 {
@@ -38,8 +33,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = true;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -55,8 +50,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 5000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extractedTick = V4PositionInfoDecoder.Current.ExtractTickLower(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extractedTick = PositionInfoDecoder.Current.ExtractTickLower(encoded);
 
             Assert.Equal(tickLower, extractedTick);
         }
@@ -69,8 +64,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 5000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extractedTick = V4PositionInfoDecoder.Current.ExtractTickUpper(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extractedTick = PositionInfoDecoder.Current.ExtractTickUpper(encoded);
 
             Assert.Equal(tickUpper, extractedTick);
         }
@@ -83,8 +78,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = true;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extracted = V4PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extracted = PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
 
             Assert.True(extracted);
         }
@@ -97,8 +92,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var extracted = V4PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var extracted = PositionInfoDecoder.Current.ExtractHasSubscriber(encoded);
 
             Assert.False(extracted);
         }
@@ -112,8 +107,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = -100;
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -130,8 +125,8 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 887272; // MAX_TICK
             bool hasSubscriber = false;
 
-            var encoded = V4PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
-            var decoded = V4PositionInfoDecoder.Current.DecodePositionInfo(encoded);
+            var encoded = PositionInfoDecoder.Current.EncodePositionInfo(poolId, tickLower, tickUpper, hasSubscriber);
+            var decoded = PositionInfoDecoder.Current.DecodePositionInfo(encoded);
 
             Assert.Equal(tickLower, decoded.TickLower);
             Assert.Equal(tickUpper, decoded.TickUpper);
@@ -150,7 +145,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = PositionInfoUtils.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.True(isInRange, "Position should be in range when currentTick is between tickLower and tickUpper");
         }
@@ -162,7 +157,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = PositionInfoUtils.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.False(isInRange, "Position should not be in range when currentTick is below tickLower");
         }
@@ -174,7 +169,7 @@ namespace Nethereum.Uniswap.Testing
             int tickLower = 0;
             int tickUpper = 1000;
 
-            bool isInRange = V4PositionInfoHelper.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
+            bool isInRange = PositionInfoUtils.Current.IsPositionInRange(currentTick, tickLower, tickUpper);
 
             Assert.False(isInRange, "Position should not be in range when currentTick is at or above tickUpper");
         }
@@ -186,11 +181,11 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
 
             // Test at lower boundary (should be in range)
-            Assert.True(V4PositionInfoHelper.Current.IsPositionInRange(tickLower, tickLower, tickUpper),
+            Assert.True(PositionInfoUtils.Current.IsPositionInRange(tickLower, tickLower, tickUpper),
                 "Position should be in range when currentTick equals tickLower");
 
             // Test at upper boundary (should NOT be in range, as per Uniswap convention)
-            Assert.False(V4PositionInfoHelper.Current.IsPositionInRange(tickUpper, tickLower, tickUpper),
+            Assert.False(PositionInfoUtils.Current.IsPositionInRange(tickUpper, tickLower, tickUpper),
                 "Position should NOT be in range when currentTick equals tickUpper");
         }
 
@@ -210,7 +205,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
             BigInteger sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
 
-            var positionInfo = V4PositionInfoHelper.Current.CreatePositionInfo(
+            var positionInfo = PositionInfoUtils.Current.CreatePositionInfo(
                 tokenId, poolId, currency0, currency1, fee, tickSpacing, hooks,
                 tickLower, tickUpper, liquidity, sqrtPriceX96);
 
@@ -239,7 +234,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger sqrtPriceX96Upper = BigInteger.Parse("300000000000000000000"); // Upper bound
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidity(sqrtPriceX96Current, sqrtPriceX96Lower, sqrtPriceX96Upper, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidity(sqrtPriceX96Current, sqrtPriceX96Lower, sqrtPriceX96Upper, liquidity);
 
             Assert.True(amounts.Amount0 > 0, $"Amount0 should be positive when in range. Got: {amounts.Amount0}");
             Assert.True(amounts.Amount1 > 0, $"Amount1 should be positive when in range. Got: {amounts.Amount1}");
@@ -255,7 +250,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger liquidity = BigInteger.Parse("1000000000000000000");
             BigInteger sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(currentTick);
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidityByTicks(sqrtPriceX96, tickLower, tickUpper, liquidity);
 
             // When price is below range, only amount0 should be non-zero
             Assert.True(amounts.Amount0 > 0 || amounts.Amount1 > 0, "At least one amount should be positive");
@@ -269,7 +264,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger feeGrowthLast = BigInteger.Parse("1000000000000000000000000000");
             BigInteger feeGrowthCurrent = BigInteger.Parse("2000000000000000000000000000");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthLast,
                 feeGrowthLast,
@@ -370,7 +365,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger amount0Max = Web3.Web3.Convert.ToWei(0.1m);
             BigInteger amount1Max = Web3.Web3.Convert.ToWei(300, UnitConversion.EthUnit.Mwei);
 
-            var actionsBuilder = new V4PositionManagerActionsBuilder();
+            var actionsBuilder = new PositionManagerActionsBuilder();
 
             actionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
@@ -393,7 +388,7 @@ namespace Nethereum.Uniswap.Testing
             var unlockData = actionsBuilder.GetUnlockData();
 
             var deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var modifyLiquiditiesFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var modifyLiquiditiesFunction = new Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = unlockData,
                 Deadline = deadline,
@@ -404,7 +399,7 @@ namespace Nethereum.Uniswap.Testing
 
             Assert.True(receipt.Status.Value == 1, "Transaction should succeed");
 
-            var tokenId = V4PositionReceiptHelper.GetMintedTokenId(receipt, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId = PositionReceiptExtension.GetMintedTokenId(receipt, UniswapAddresses.MainnetPositionManagerV4);
             Assert.True(tokenId >= 0, "Should extract valid tokenId from receipt");
 
             var actualLiquidity = await positionManager.GetPositionLiquidityQueryAsync(tokenId);
@@ -416,7 +411,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.Equal(poolKey.Fee, positionInfo.PoolKey.Fee);
 
             var positionInfoBytes = await positionManager.PositionInfoQueryAsync(tokenId);
-            var decodedInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(positionInfoBytes);
+            var decodedInfo = PositionInfoDecoder.Current.DecodePositionInfo(positionInfoBytes);
             Assert.Equal(tickLower, decodedInfo.TickLower);
             Assert.Equal(tickUpper, decodedInfo.TickUpper);
 
@@ -458,8 +453,8 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            // Mint position first using V4PositionManagerActionsBuilder
-            var mintActionsBuilder = new V4PositionManagerActionsBuilder();
+            // Mint position first using PositionManagerActionsBuilder
+            var mintActionsBuilder = new PositionManagerActionsBuilder();
             mintActionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -475,7 +470,7 @@ namespace Nethereum.Uniswap.Testing
 
             var mintUnlockData = mintActionsBuilder.GetUnlockData();
             var mintDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var mintFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintFunction = new Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintUnlockData,
                 Deadline = mintDeadline,
@@ -493,7 +488,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger amount0Max = Web3.Web3.Convert.ToWei(0.05m);
             BigInteger amount1Max = Web3.Web3.Convert.ToWei(150, UnitConversion.EthUnit.Mwei);
 
-            var increaseActionsBuilder = new V4PositionManagerActionsBuilder();
+            var increaseActionsBuilder = new PositionManagerActionsBuilder();
 
             // 1. Increase liquidity
             increaseActionsBuilder.AddCommand(new UniversalRouter.V4Actions.IncreaseLiquidity()
@@ -510,7 +505,7 @@ namespace Nethereum.Uniswap.Testing
 
             var increaseUnlockData = increaseActionsBuilder.GetUnlockData();
             var increaseDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var increaseFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var increaseFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = increaseUnlockData,
                 Deadline = increaseDeadline,
@@ -561,8 +556,8 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            // Mint position using V4PositionManagerActionsBuilder
-            var mintActionsBuilder = new V4PositionManagerActionsBuilder();
+            // Mint position using PositionManagerActionsBuilder
+            var mintActionsBuilder = new PositionManagerActionsBuilder();
             mintActionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -578,7 +573,7 @@ namespace Nethereum.Uniswap.Testing
 
             var mintUnlockData = mintActionsBuilder.GetUnlockData();
             var mintDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var mintFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintUnlockData,
                 Deadline = mintDeadline,
@@ -594,7 +589,7 @@ namespace Nethereum.Uniswap.Testing
             BigInteger amount0Min = 0; // No slippage protection for test
             BigInteger amount1Min = 0;
 
-            var decreaseActionsBuilder = new V4PositionManagerActionsBuilder();
+            var decreaseActionsBuilder = new PositionManagerActionsBuilder();
 
             // 1. Decrease liquidity
             decreaseActionsBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
@@ -611,7 +606,7 @@ namespace Nethereum.Uniswap.Testing
 
             var decreaseUnlockData = decreaseActionsBuilder.GetUnlockData();
             var decreaseDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var decreaseFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var decreaseFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = decreaseUnlockData,
                 Deadline = decreaseDeadline,
@@ -662,8 +657,8 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            // Mint position using V4PositionManagerActionsBuilder
-            var mintActionsBuilder = new V4PositionManagerActionsBuilder();
+            // Mint position using PositionManagerActionsBuilder
+            var mintActionsBuilder = new PositionManagerActionsBuilder();
             mintActionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -679,7 +674,7 @@ namespace Nethereum.Uniswap.Testing
 
             var mintUnlockData = mintActionsBuilder.GetUnlockData();
             var mintDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var mintFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintUnlockData,
                 Deadline = mintDeadline,
@@ -693,7 +688,7 @@ namespace Nethereum.Uniswap.Testing
             // First decrease all liquidity to 0
             if (currentLiquidity > 0)
             {
-                var decreaseActionsBuilder = new V4PositionManagerActionsBuilder();
+                var decreaseActionsBuilder = new PositionManagerActionsBuilder();
                 decreaseActionsBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
                 {
                     TokenId = tokenId,
@@ -706,7 +701,7 @@ namespace Nethereum.Uniswap.Testing
 
                 var decreaseUnlockData = decreaseActionsBuilder.GetUnlockData();
                 var decreaseDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-                var decreaseFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+                var decreaseFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
                 {
                     UnlockData = decreaseUnlockData,
                     Deadline = decreaseDeadline,
@@ -716,7 +711,7 @@ namespace Nethereum.Uniswap.Testing
             }
 
             // Now burn the position (removes the NFT)
-            var burnActionsBuilder = new V4PositionManagerActionsBuilder();
+            var burnActionsBuilder = new PositionManagerActionsBuilder();
             burnActionsBuilder.AddCommand(new UniversalRouter.V4Actions.BurnPosition()
             {
                 TokenId = tokenId,
@@ -730,7 +725,7 @@ namespace Nethereum.Uniswap.Testing
 
             var burnUnlockData = burnActionsBuilder.GetUnlockData();
             var burnDeadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60;
-            var burnFunction = new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var burnFunction = new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = burnUnlockData,
                 Deadline = burnDeadline,
@@ -781,7 +776,7 @@ namespace Nethereum.Uniswap.Testing
             // STEP 1: MINT POSITION
             var initialNextTokenId = await positionManager.NextTokenIdQueryAsync();
 
-            var mintActionsBuilder = new V4PositionManagerActionsBuilder();
+            var mintActionsBuilder = new PositionManagerActionsBuilder();
             mintActionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -795,7 +790,7 @@ namespace Nethereum.Uniswap.Testing
             });
             mintActionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
 
-            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -808,7 +803,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(liquidityAfterMint > 0, "Position should have liquidity after mint");
 
             // STEP 2: INCREASE LIQUIDITY
-            var increaseActionsBuilder = new V4PositionManagerActionsBuilder();
+            var increaseActionsBuilder = new PositionManagerActionsBuilder();
             increaseActionsBuilder.AddCommand(new UniversalRouter.V4Actions.IncreaseLiquidity()
             {
                 TokenId = tokenId,
@@ -819,7 +814,7 @@ namespace Nethereum.Uniswap.Testing
             });
             increaseActionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
 
-            var increaseReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var increaseReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = increaseActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -832,7 +827,7 @@ namespace Nethereum.Uniswap.Testing
 
             // STEP 3: DECREASE LIQUIDITY (remove 1/3)
             var liquidityToRemove = liquidityAfterIncrease / 3;
-            var decreaseActionsBuilder = new V4PositionManagerActionsBuilder();
+            var decreaseActionsBuilder = new PositionManagerActionsBuilder();
             decreaseActionsBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
             {
                 TokenId = tokenId,
@@ -843,7 +838,7 @@ namespace Nethereum.Uniswap.Testing
             });
             decreaseActionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            var decreaseReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var decreaseReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = decreaseActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -855,7 +850,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(liquidityAfterDecrease < liquidityAfterIncrease, "Liquidity should decrease");
 
             // STEP 4: DECREASE ALL REMAINING LIQUIDITY
-            var decreaseAllActionsBuilder = new V4PositionManagerActionsBuilder();
+            var decreaseAllActionsBuilder = new PositionManagerActionsBuilder();
             decreaseAllActionsBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
             {
                 TokenId = tokenId,
@@ -866,7 +861,7 @@ namespace Nethereum.Uniswap.Testing
             });
             decreaseAllActionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = decreaseAllActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -874,7 +869,7 @@ namespace Nethereum.Uniswap.Testing
             });
 
             // STEP 5: BURN POSITION
-            var burnActionsBuilder = new V4PositionManagerActionsBuilder();
+            var burnActionsBuilder = new PositionManagerActionsBuilder();
             burnActionsBuilder.AddCommand(new UniversalRouter.V4Actions.BurnPosition()
             {
                 TokenId = tokenId,
@@ -884,7 +879,7 @@ namespace Nethereum.Uniswap.Testing
             });
             burnActionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            var burnReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var burnReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = burnActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -925,7 +920,7 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            var mintActionsBuilder = new V4PositionManagerActionsBuilder();
+            var mintActionsBuilder = new PositionManagerActionsBuilder();
             mintActionsBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -939,17 +934,17 @@ namespace Nethereum.Uniswap.Testing
             });
             mintActionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
 
-            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
             });
 
-            var oldTokenId = V4PositionReceiptHelper.GetMintedTokenId(mintReceipt, UniswapAddresses.MainnetPositionManagerV4);
+            var oldTokenId = PositionReceiptExtension.GetMintedTokenId(mintReceipt, UniswapAddresses.MainnetPositionManagerV4);
             var oldLiquidity = await positionManager.GetPositionLiquidityQueryAsync(oldTokenId);
 
-            var rebalanceActionsBuilder = new V4PositionManagerActionsBuilder();
+            var rebalanceActionsBuilder = new PositionManagerActionsBuilder();
 
             rebalanceActionsBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
             {
@@ -975,7 +970,7 @@ namespace Nethereum.Uniswap.Testing
             rebalanceActionsBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
             rebalanceActionsBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            var rebalanceReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var rebalanceReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = rebalanceActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -987,7 +982,7 @@ namespace Nethereum.Uniswap.Testing
             var oldFinalLiquidity = await positionManager.GetPositionLiquidityQueryAsync(oldTokenId);
             Assert.Equal(BigInteger.Zero, oldFinalLiquidity);
 
-            var allTransfers = rebalanceReceipt.DecodeAllEvents<Nethereum.Uniswap.V4.PositionManager.ContractDefinition.TransferEventDTO>();
+            var allTransfers = rebalanceReceipt.DecodeAllEvents<TransferEventDTO>();
             var newMintTransfer = allTransfers.Where(e => e.Event.From == AddressUtil.ZERO_ADDRESS && e.Event.Id != oldTokenId).FirstOrDefault();
             Assert.NotNull(newMintTransfer);
 
@@ -996,7 +991,7 @@ namespace Nethereum.Uniswap.Testing
             Assert.True(newLiquidity > 0, "New position should have liquidity");
 
             var newPositionInfoBytes = await positionManager.PositionInfoQueryAsync(newTokenId);
-            var newPositionInfo = V4PositionInfoDecoder.Current.DecodePositionInfo(newPositionInfoBytes);
+            var newPositionInfo = PositionInfoDecoder.Current.DecodePositionInfo(newPositionInfoBytes);
             Assert.Equal(-1200, newPositionInfo.TickLower);
             Assert.Equal(1200, newPositionInfo.TickUpper);
         }
@@ -1030,7 +1025,7 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            var mintBuilder1 = new V4PositionManagerActionsBuilder();
+            var mintBuilder1 = new PositionManagerActionsBuilder();
             mintBuilder1.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -1043,15 +1038,15 @@ namespace Nethereum.Uniswap.Testing
                 HookData = new byte[0]
             });
             mintBuilder1.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
-            var receipt1 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var receipt1 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintBuilder1.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
             });
-            var tokenId1 = V4PositionReceiptHelper.GetMintedTokenId(receipt1, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId1 = PositionReceiptExtension.GetMintedTokenId(receipt1, UniswapAddresses.MainnetPositionManagerV4);
 
-            var mintBuilder2 = new V4PositionManagerActionsBuilder();
+            var mintBuilder2 = new PositionManagerActionsBuilder();
             mintBuilder2.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -1064,18 +1059,18 @@ namespace Nethereum.Uniswap.Testing
                 HookData = new byte[0]
             });
             mintBuilder2.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
-            var receipt2 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var receipt2 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintBuilder2.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.15m)
             });
-            var tokenId2 = V4PositionReceiptHelper.GetMintedTokenId(receipt2, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId2 = PositionReceiptExtension.GetMintedTokenId(receipt2, UniswapAddresses.MainnetPositionManagerV4);
 
             var liquidity1Before = await positionManager.GetPositionLiquidityQueryAsync(tokenId1);
             var liquidity2Before = await positionManager.GetPositionLiquidityQueryAsync(tokenId2);
 
-            var batchActionsBuilder = new V4PositionManagerActionsBuilder();
+            var batchActionsBuilder = new PositionManagerActionsBuilder();
 
             batchActionsBuilder.AddCommand(new UniversalRouter.V4Actions.IncreaseLiquidity()
             {
@@ -1098,7 +1093,7 @@ namespace Nethereum.Uniswap.Testing
             batchActionsBuilder.AddCommand(new CloseCurrency() { Currency = eth });
             batchActionsBuilder.AddCommand(new CloseCurrency() { Currency = usdc });
 
-            var batchReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var batchReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = batchActionsBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
@@ -1143,7 +1138,7 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            var mintBuilder = new V4PositionManagerActionsBuilder();
+            var mintBuilder = new PositionManagerActionsBuilder();
             mintBuilder.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -1157,18 +1152,18 @@ namespace Nethereum.Uniswap.Testing
             });
             mintBuilder.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
 
-            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var mintReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
             });
 
-            var tokenId = V4PositionReceiptHelper.GetMintedTokenId(mintReceipt, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId = PositionReceiptExtension.GetMintedTokenId(mintReceipt, UniswapAddresses.MainnetPositionManagerV4);
 
             await SwapEthForUsdc(web3, universalRouter, usdc, Web3.Web3.Convert.ToWei(0.5));
 
-            var collectBuilder = new V4PositionManagerActionsBuilder();
+            var collectBuilder = new PositionManagerActionsBuilder();
             collectBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
             {
                 TokenId = tokenId,
@@ -1179,7 +1174,7 @@ namespace Nethereum.Uniswap.Testing
             });
             collectBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            var collectReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var collectReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = collectBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60
@@ -1217,7 +1212,7 @@ namespace Nethereum.Uniswap.Testing
                 Hooks = AddressUtil.ZERO_ADDRESS
             };
 
-            var mintBuilder1 = new V4PositionManagerActionsBuilder();
+            var mintBuilder1 = new PositionManagerActionsBuilder();
             mintBuilder1.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -1230,15 +1225,15 @@ namespace Nethereum.Uniswap.Testing
                 HookData = new byte[0]
             });
             mintBuilder1.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
-            var receipt1 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var receipt1 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintBuilder1.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
             });
-            var tokenId1 = V4PositionReceiptHelper.GetMintedTokenId(receipt1, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId1 = PositionReceiptExtension.GetMintedTokenId(receipt1, UniswapAddresses.MainnetPositionManagerV4);
 
-            var mintBuilder2 = new V4PositionManagerActionsBuilder();
+            var mintBuilder2 = new PositionManagerActionsBuilder();
             mintBuilder2.AddCommand(new UniversalRouter.V4Actions.MintPosition()
             {
                 PoolKey = poolKey,
@@ -1251,17 +1246,17 @@ namespace Nethereum.Uniswap.Testing
                 HookData = new byte[0]
             });
             mintBuilder2.AddCommand(new SettlePair() { Currency0 = eth, Currency1 = usdc });
-            var receipt2 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var receipt2 = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = mintBuilder2.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60,
                 AmountToSend = Web3.Web3.Convert.ToWei(0.15m)
             });
-            var tokenId2 = V4PositionReceiptHelper.GetMintedTokenId(receipt2, UniswapAddresses.MainnetPositionManagerV4);
+            var tokenId2 = PositionReceiptExtension.GetMintedTokenId(receipt2, UniswapAddresses.MainnetPositionManagerV4);
 
             await SwapEthForUsdc(web3, universalRouter, usdc, Web3.Web3.Convert.ToWei(1));
 
-            var batchCollectBuilder = new V4PositionManagerActionsBuilder();
+            var batchCollectBuilder = new PositionManagerActionsBuilder();
 
             batchCollectBuilder.AddCommand(new UniversalRouter.V4Actions.DecreaseLiquidity()
             {
@@ -1283,7 +1278,7 @@ namespace Nethereum.Uniswap.Testing
 
             batchCollectBuilder.AddCommand(new TakePair() { Currency0 = eth, Currency1 = usdc, Recipient = account });
 
-            var batchCollectReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new Nethereum.Uniswap.V4.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
+            var batchCollectReceipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(new  Nethereum.Uniswap.V4.Positions.PositionManager.ContractDefinition.ModifyLiquiditiesFunction
             {
                 UnlockData = batchCollectBuilder.GetUnlockData(),
                 Deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 60

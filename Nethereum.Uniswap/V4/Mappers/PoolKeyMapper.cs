@@ -1,5 +1,4 @@
 ﻿using Nethereum.Uniswap.UniversalRouter.V4Actions;
-using Nethereum.Uniswap.V4.V4Quoter.ContractDefinition;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,7 +8,7 @@ namespace Nethereum.Uniswap.V4.Mappers
     {
         public static PoolKeyMapper Current { get; } = new PoolKeyMapper();
 
-        public UniversalRouter.V4Actions.PoolKey MapToV4Action(V4Quoter.ContractDefinition.PoolKey poolKey)
+        public UniversalRouter.V4Actions.PoolKey MapToV4Action(Pricing.V4Quoter.ContractDefinition.PoolKey poolKey)
         {
             return new UniversalRouter.V4Actions.PoolKey
             {
@@ -21,9 +20,9 @@ namespace Nethereum.Uniswap.V4.Mappers
             };
         }
 
-        public V4Quoter.ContractDefinition.PoolKey MapToV4Quoter(UniversalRouter.V4Actions.PoolKey poolKey)
+        public Pricing.V4Quoter.ContractDefinition.PoolKey MapToV4Quoter(UniversalRouter.V4Actions.PoolKey poolKey)
         {
-            return new V4Quoter.ContractDefinition.PoolKey
+            return new Pricing.V4Quoter.ContractDefinition.PoolKey
             {
                 Currency0 = poolKey.Currency0,
                 Currency1 = poolKey.Currency1,
@@ -33,12 +32,12 @@ namespace Nethereum.Uniswap.V4.Mappers
             };
         }
 
-        public List<UniversalRouter.V4Actions.PoolKey> MapToV4Action(List<V4Quoter.ContractDefinition.PoolKey> poolKeys)
+        public List<UniversalRouter.V4Actions.PoolKey> MapToV4Action(List<Pricing.V4Quoter.ContractDefinition.PoolKey> poolKeys)
         {
             return poolKeys.Select(MapToV4Action).ToList();
         }
 
-        public List<V4Quoter.ContractDefinition.PoolKey> MapToV4Quoters(List<UniversalRouter.V4Actions.PoolKey> poolKeys)
+        public List<Pricing.V4Quoter.ContractDefinition.PoolKey> MapToV4Quoters(List<UniversalRouter.V4Actions.PoolKey> poolKeys)
         {
             return poolKeys.Select(MapToV4Quoter).ToList();
         }

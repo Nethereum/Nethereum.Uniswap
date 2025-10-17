@@ -1,4 +1,6 @@
-﻿using Nethereum.Uniswap.V4;
+﻿using Nethereum.Uniswap.V4.Positions;
+using Nethereum.Uniswap.V4.Pricing;
+using Nethereum.Uniswap.V4.Utils;
 using Nethereum.Util;
 using System;
 using System.Numerics;
@@ -125,7 +127,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(tick);
 
             // Verify the price is positive and reasonable
-            var price = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
+            var price = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
             Assert.True(price > 0, $"Price should be positive. Got: {price}");
 
             // For tick 1000, price should be > 1 (positive tick means token1 is worth more)
@@ -226,7 +228,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var amount0 = Web3.Web3.Convert.ToWei(1); // 1 token0
 
-            var liquidity = V4LiquidityMath.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
+            var liquidity = LiquidityCalculator.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
 
             Assert.True(liquidity > 0, "Liquidity should be positive");
         }
@@ -239,7 +241,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var amount1 = Web3.Web3.Convert.ToWei(1); // 1 token1
 
-            var liquidity = V4LiquidityMath.Current.GetLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
+            var liquidity = LiquidityCalculator.Current.GetLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
 
             Assert.True(liquidity > 0, "Liquidity should be positive");
         }
@@ -252,7 +254,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var liquidity = BigInteger.Parse("1000000000000000000"); // 1e18
 
-            var amount0 = V4LiquidityMath.Current.GetAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var amount0 = LiquidityCalculator.Current.GetAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             Assert.True(amount0 > 0, "Amount0 should be positive");
         }
@@ -265,7 +267,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var liquidity = BigInteger.Parse("1000000000000000000"); // 1e18
 
-            var amount1 = V4LiquidityMath.Current.GetAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var amount1 = LiquidityCalculator.Current.GetAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             Assert.True(amount1 > 0, "Amount1 should be positive");
         }
@@ -280,7 +282,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = BigInteger.Parse("300000000000000000000"); // Upper bound
             var liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             Assert.True(amounts.Amount0 > 0, $"Amount0 should be positive when price is in range. Got: {amounts.Amount0}");
             Assert.True(amounts.Amount1 > 0, $"Amount1 should be positive when price is in range. Got: {amounts.Amount1}");
@@ -296,7 +298,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             Assert.True(amounts.Amount0 > 0, $"Amount0 should be positive when price is below range. Got: {amounts.Amount0}");
             Assert.Equal(BigInteger.Zero, amounts.Amount1);
@@ -312,7 +314,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidity(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             Assert.Equal(BigInteger.Zero, amounts.Amount0);
             Assert.True(amounts.Amount1 > 0, $"Amount1 should be positive when price is above range. Got: {amounts.Amount1}");
@@ -328,7 +330,7 @@ namespace Nethereum.Uniswap.Testing
             int tickUpper = 1000;
             var liquidity = BigInteger.Parse("1000000000000000000");
 
-            var amounts = V4LiquidityMath.Current.GetAmountsForLiquidityByTicks(sqrtRatioCurrentX96, tickLower, tickUpper, liquidity);
+            var amounts = LiquidityCalculator.Current.GetAmountsForLiquidityByTicks(sqrtRatioCurrentX96, tickLower, tickUpper, liquidity);
 
             // Just verify it returns some amounts - the exact behavior depends on where
             // the sqrtPrice falls relative to the tick range
@@ -346,7 +348,7 @@ namespace Nethereum.Uniswap.Testing
             var amount0 = Web3.Web3.Convert.ToWei(1);
             var amount1 = Web3.Web3.Convert.ToWei(1);
 
-            var liquidity = V4LiquidityMath.Current.GetLiquidityForAmounts(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1);
+            var liquidity = LiquidityCalculator.Current.GetLiquidityForAmounts(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1);
 
             Assert.True(liquidity > 0, "Liquidity should be positive");
         }
@@ -359,8 +361,8 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var originalAmount0 = Web3.Web3.Convert.ToWei(1);
 
-            var liquidity = V4LiquidityMath.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, originalAmount0);
-            var resultAmount0 = V4LiquidityMath.Current.GetAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var liquidity = LiquidityCalculator.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, originalAmount0);
+            var resultAmount0 = LiquidityCalculator.Current.GetAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             // Due to integer division, result might be slightly less than original
             var diff = originalAmount0 - resultAmount0;
@@ -377,8 +379,8 @@ namespace Nethereum.Uniswap.Testing
             var sqrtRatioBX96 = V4TickMath.Current.GetSqrtRatioAtTick(1000);
             var originalAmount1 = Web3.Web3.Convert.ToWei(1);
 
-            var liquidity = V4LiquidityMath.Current.GetLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, originalAmount1);
-            var resultAmount1 = V4LiquidityMath.Current.GetAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+            var liquidity = LiquidityCalculator.Current.GetLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, originalAmount1);
+            var resultAmount1 = LiquidityCalculator.Current.GetAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
 
             // Due to integer division, result might be slightly less than original
             var diff = originalAmount1 - resultAmount1;
@@ -396,10 +398,10 @@ namespace Nethereum.Uniswap.Testing
             var amount0 = Web3.Web3.Convert.ToWei(1);
 
             // Call with correct order
-            var liquidity1 = V4LiquidityMath.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
+            var liquidity1 = LiquidityCalculator.Current.GetLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
 
             // Call with swapped order - should auto-sort and give same result
-            var liquidity2 = V4LiquidityMath.Current.GetLiquidityForAmount0(sqrtRatioBX96, sqrtRatioAX96, amount0);
+            var liquidity2 = LiquidityCalculator.Current.GetLiquidityForAmount0(sqrtRatioBX96, sqrtRatioAX96, amount0);
 
             Assert.Equal(liquidity1, liquidity2);
         }
@@ -413,7 +415,7 @@ namespace Nethereum.Uniswap.Testing
         {
             // Test basic price calculation from sqrtPriceX96
             var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
-            var price = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
+            var price = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
 
             Assert.True(price > 0, "Price should be positive");
         }
@@ -425,15 +427,15 @@ namespace Nethereum.Uniswap.Testing
             var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
 
             // 18 decimals / 6 decimals (e.g., ETH/USDC)
-            var priceETH_USDC = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 18, 6);
+            var priceETH_USDC = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 18, 6);
             Assert.True(priceETH_USDC > 0);
 
             // 18 decimals / 18 decimals (e.g., ETH/DAI)
-            var priceETH_DAI = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 18, 18);
+            var priceETH_DAI = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 18, 18);
             Assert.True(priceETH_DAI > 0);
 
             // 6 decimals / 6 decimals (e.g., USDC/USDT)
-            var priceUSDC_USDT = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 6, 6);
+            var priceUSDC_USDT = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, 6, 6);
             Assert.True(priceUSDC_USDT > 0);
         }
 
@@ -443,8 +445,8 @@ namespace Nethereum.Uniswap.Testing
             // Test round-trip: price -> sqrtPriceX96 -> price
             decimal originalPrice = 2500m; // e.g., ETH price
 
-            var sqrtPriceX96 = V4PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(originalPrice);
-            var resultPrice = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
+            var sqrtPriceX96 = PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(originalPrice);
+            var resultPrice = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96);
 
             var percentDiff = Math.Abs((resultPrice - originalPrice) / originalPrice * 100);
             Assert.True(percentDiff < 1, $"Round-trip price should be within 1%. Original: {originalPrice}, Result: {resultPrice}, Diff: {percentDiff:F4}%");
@@ -458,8 +460,8 @@ namespace Nethereum.Uniswap.Testing
             int decimals0 = 6;
             int decimals1 = 18;
 
-            var sqrtPriceX96 = V4PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(originalPrice, decimals0, decimals1);
-            var resultPrice = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, decimals0, decimals1);
+            var sqrtPriceX96 = PriceCalculator.Current.CalculateSqrtPriceX96FromPrice(originalPrice, decimals0, decimals1);
+            var resultPrice = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(sqrtPriceX96, decimals0, decimals1);
 
             var percentDiff = Math.Abs((resultPrice - originalPrice) / originalPrice * 100);
             Assert.True(percentDiff < 5, $"Round-trip price should be within 5%. Original: {originalPrice}, Result: {resultPrice}, Diff: {percentDiff:F4}%");
@@ -475,7 +477,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
             int tick = 0;
 
-            var poolPrice = V4PriceCalculator.Current.CreatePoolPrice(poolId, currency0, currency1, sqrtPriceX96, tick);
+            var poolPrice = PriceCalculator.Current.CreatePoolPrice(poolId, currency0, currency1, sqrtPriceX96, tick);
 
             Assert.NotNull(poolPrice);
             Assert.Equal(poolId, poolPrice.PoolId);
@@ -497,7 +499,7 @@ namespace Nethereum.Uniswap.Testing
             var sqrtPriceX96 = V4TickMath.Current.GetSqrtRatioAtTick(0);
             int tick = 0;
 
-            var poolPrice = V4PriceCalculator.Current.CreatePoolPrice(poolId, currency0, currency1, sqrtPriceX96, tick, 18, 6);
+            var poolPrice = PriceCalculator.Current.CreatePoolPrice(poolId, currency0, currency1, sqrtPriceX96, tick, 18, 6);
 
             Assert.NotNull(poolPrice);
             Assert.True(poolPrice.PriceCurrency0InCurrency1 > 0);
@@ -507,7 +509,7 @@ namespace Nethereum.Uniswap.Testing
         public void PriceCalculator_ZeroSqrtPrice_ReturnsZero()
         {
             // Test with zero sqrtPrice
-            var price = V4PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(BigInteger.Zero);
+            var price = PriceCalculator.Current.CalculatePriceFromSqrtPriceX96(BigInteger.Zero);
             Assert.Equal(0, price);
         }
 
@@ -525,7 +527,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("100000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("100000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -546,7 +548,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("200000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("200000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -567,7 +569,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("200000000000000000000000000000000");
             var feeGrowthInside1Current = BigInteger.Parse("200000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -588,7 +590,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("100000000000000000000000000000000"); // Smaller (wrapped around)
             var feeGrowthInside1Current = BigInteger.Parse("100000000000000000000000000000000");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,
@@ -610,7 +612,7 @@ namespace Nethereum.Uniswap.Testing
             var feeGrowthInside0Current = BigInteger.Parse("340282366920938463463374607431768211456"); // Large growth
             var feeGrowthInside1Current = BigInteger.Parse("340282366920938463463374607431768211456");
 
-            var fees = V4FeeCalculator.Current.CalculateUnclaimedFees(
+            var fees = FeeCalculator.Current.CalculateUnclaimedFees(
                 liquidity,
                 feeGrowthInside0Last,
                 feeGrowthInside1Last,

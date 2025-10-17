@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Xunit;
-using Nethereum.Uniswap.V4;
+using Nethereum.Uniswap.V4.Pools;
+using Nethereum.Uniswap.V4.Pricing;
 
 namespace Nethereum.Uniswap.Testing
 {
@@ -12,7 +13,7 @@ namespace Nethereum.Uniswap.Testing
         [Fact]
         public void EnumerateTokenRoutes_RespectsMaxHops()
         {
-            var method = typeof(V4BestPathFinder).GetMethod(
+            var method = typeof(QuotePricePathFinder).GetMethod(
                 "EnumerateTokenRoutes",
                 BindingFlags.NonPublic | BindingFlags.Static);
 
@@ -47,7 +48,7 @@ namespace Nethereum.Uniswap.Testing
         [Fact]
         public void BuildCandidateLookup_NormalizesTokenPairs()
         {
-            var method = typeof(V4BestPathFinder).GetMethod(
+            var method = typeof(QuotePricePathFinder).GetMethod(
                 "BuildCandidateLookup",
                 BindingFlags.NonPublic | BindingFlags.Static);
 
